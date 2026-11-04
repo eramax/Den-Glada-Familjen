@@ -197,6 +197,8 @@ export interface Dict {
     venueShort: string;
     amenities: string;
     partner: string;
+    mapAlt: string;
+    openMap: string;
     formatLabel: string;
     formatTitle: string;
     formatLead: string;

@@ -9,4 +9,6 @@ export const SITE = {
   orgNumber: '802527-6026',
   founded: '2019',
   city: 'Västerås',
+  mapsUrl: 'https://www.google.com/maps/search/?api=1&query=ABF-huset%2C+Pilgatan+2%2C+V%C3%A4ster%C3%A5s',
+  osmCopyright: 'https://www.openstreetmap.org/copyright',
 } as const;

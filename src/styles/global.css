@@ -2260,6 +2260,10 @@ html[lang='ar'] .next-meeting__time {
   color: var(--amber-deep);
 }
 
+.next-meeting__venue:hover {
+  color: var(--green-deep);
+}
+
 .next-meeting__copy {
   min-width: 0;
 }
@@ -2543,6 +2547,67 @@ html[lang='ar'] .meetings-hero__card-time {
   width: 1rem;
   height: 1rem;
   margin-top: 0.18rem;
+  color: var(--amber);
+}
+
+.meetings-hero__map {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  margin-top: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: var(--cream-2);
+  scroll-margin-top: calc(var(--header-h) + 1rem);
+}
+
+.meetings-hero__map img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.meetings-hero__map-label,
+.meetings-hero__map-open {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--navy);
+  font-size: 0.7rem;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+}
+
+.meetings-hero__map-label {
+  top: 0.6rem;
+  inset-inline-start: 0.6rem;
+}
+
+.meetings-hero__map-open {
+  bottom: 0.6rem;
+  inset-inline-start: 0.6rem;
+  color: var(--green-deep);
+}
+
+.meetings-hero__map-label .icon,
+.meetings-hero__map-open .icon {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.meetings-hero__map-credit {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.meetings-hero__map-credit:hover {
   color: var(--amber);
 }
 

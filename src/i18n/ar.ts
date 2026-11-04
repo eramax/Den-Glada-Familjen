@@ -219,8 +219,8 @@ export const ar: Dict = {
     emailLabel: 'البريد الإلكتروني',
     whatsappLabel: 'واتساب',
     locationLabel: 'الموقع',
-    location: 'فيستيروس، السويد',
-    locationNote: 'نلتقي في مواقع مختلفة حول المدينة.',
+    location: 'ABF-huset — Pilgatan 2, Västerås',
+    locationNote: 'لقاءاتنا كل أحد في مكاتب ABF.',
     socialLabel: 'تابعنا',
     socials: {
       youtube: 'قناة الجمعية على يوتيوب',
@@ -257,6 +257,8 @@ export const ar: Dict = {
     venueShort: 'ABF-huset · Pilgatan 2, Västerås',
     amenities: 'ضيافة (fika) · موقف سيارات · الأطفال مرحب بهم',
     partner: 'بالتعاون مع ABF',
+    mapAlt: 'خريطة موقع ABF-huset في Pilgatan 2، فيستيروس',
+    openMap: 'افتح الخريطة',
     formatLabel: 'كيف يبدو اللقاء؟',
     formatTitle: 'مساحة للعائلة كلها',
     formatLead:

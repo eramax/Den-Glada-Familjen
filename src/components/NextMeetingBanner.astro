@@ -25,7 +25,9 @@ const meetingPath = meetingPaths[lang];
             <span class="next-meeting__label">{t.meetingsPage.nextLabel}</span>
             <strong class="next-meeting__date">{formatMeetingDate(meeting.date, lang)}</strong>
             <span class="next-meeting__time"><bdi dir="ltr">{t.meetingsPage.scheduleTime}</bdi></span>
-            <span class="next-meeting__venue"><Icon name="mapPin" /> {t.meetingsPage.venueShort}</span>
+            <a class="next-meeting__venue" href={`${meetingPath}#location`}>
+              <Icon name="mapPin" /> {t.meetingsPage.venueShort}
+            </a>
           </span>
         </div>
 

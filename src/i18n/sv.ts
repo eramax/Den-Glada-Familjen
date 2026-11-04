@@ -219,8 +219,8 @@ export const sv: Dict = {
     emailLabel: 'E-post',
     whatsappLabel: 'WhatsApp',
     locationLabel: 'Plats',
-    location: 'Västerås, Sverige',
-    locationNote: 'Vi möts på olika platser runt om i staden.',
+    location: 'ABF-huset — Pilgatan 2, Västerås',
+    locationNote: 'Våra möten varje söndag i ABF-huset.',
     socialLabel: 'Följ oss',
     socials: {
       youtube: 'Föreningens YouTube-kanal',
@@ -257,6 +257,8 @@ export const sv: Dict = {
     venueShort: 'ABF-huset · Pilgatan 2, Västerås',
     amenities: 'Fika · Parkering · Barn välkomna',
     partner: 'I samarbete med ABF',
+    mapAlt: 'Karta över ABF-huset på Pilgatan 2 i Västerås',
+    openMap: 'Öppna kartan',
     formatLabel: 'Hur ser mötet ut?',
     formatTitle: 'En plats för hela familjen',
     formatLead:

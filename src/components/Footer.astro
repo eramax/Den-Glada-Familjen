@@ -49,10 +49,10 @@ const hrefFor = (item: Dict['nav']['items'][number]) =>
             <Icon name="whatsapp" />
             <span dir="ltr">{SITE.phoneDisplay}</span>
           </a>
-          <span>
+          <a href={SITE.mapsUrl} target="_blank" rel="noopener noreferrer">
             <Icon name="mapPin" />
             {t.contact.location}
-          </span>
+          </a>
         </div>
       </div>
 

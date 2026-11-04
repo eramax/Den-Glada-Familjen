@@ -36,14 +36,14 @@ const [emailUser, emailDomain] = SITE.email.split('@');
           </span>
         </a>
 
-        <div class="contact-card">
+        <a class="contact-card" href={SITE.mapsUrl} target="_blank" rel="noopener noreferrer">
           <span class="contact-card__icon"><Icon name="mapPin" /></span>
           <span class="contact-card__body">
             <span class="contact-card__label">{t.contact.locationLabel}</span>
             <span class="contact-card__value">{t.contact.location}</span>
             <span class="contact-card__note">{t.contact.locationNote}</span>
           </span>
-        </div>
+        </a>
       </div>
 
       <p class="contact__social-label">{t.contact.socialLabel}</p>
