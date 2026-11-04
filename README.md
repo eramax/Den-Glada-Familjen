@@ -95,10 +95,9 @@ npm run preview  # معاينة نسخة الإنتاج محليًا
 
 ### تغيير اسم النطاق
 
-قبل النشر على نطاق مخصص:
-
-1. عدّل `SITE` داخل `astro.config.mjs` (سيتحدّث رابط Sitemap في `robots.txt` تلقائيًا).
-2. أعد توليد أو عدّل النص الصغير في `public/og-image-ar.jpg` و`public/og-image-sv.jpg` (يحتويان حاليًا على `dgf-vaesteras.pages.dev`).
+- Cloudflare Pages يضبط `CF_PAGES_URL` تلقائيًا، لذا `canonical` و`Sitemap` و`robots.txt` ستستخدم رابط النشر.
+- للنطاق المخصص: أضف متغير بيئة `SITE_URL = https://your-domain.com` في إعدادات Pages.
+- صور OG لا تحتوي على اسم نطاق، لذا لا تحتاج تعديلًا.
 
 ---
 
@@ -114,6 +113,7 @@ npm run preview  # معاينة نسخة الإنتاج محليًا
    - **Build command:** `npm run build`
    - **Build output directory:** `dist`
    - **Environment variable:** `NODE_VERSION = 22.23.4`
+   - **Environment variable (اختياري):** `SITE_URL = https://your-domain.com` للنطاق المخصص
 5. اضغط **Save and Deploy**.
 
 ### الطريقة 2: عبر Wrangler CLI
