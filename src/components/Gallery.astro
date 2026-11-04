@@ -22,19 +22,8 @@ const images = {
   dinner: galleryDinner,
 };
 
-const widths: Record<string, number[]> = {
-  community: [600, 900, 1200],
-  kids: [400, 600, 800],
-  trip: [400, 600, 800],
-  dinner: [400, 600, 800],
-};
-
-const sizes: Record<string, string> = {
-  community: '(max-width: 900px) 100vw, 50vw',
-  kids: '(max-width: 900px) 50vw, 25vw',
-  trip: '(max-width: 900px) 50vw, 25vw',
-  dinner: '(max-width: 900px) 100vw, 25vw',
-};
+const widths = [400, 600, 800];
+const sizes = '(max-width: 900px) 78vw, 25vw';
 ---
 
 <section class="section gallery" id="gallery">
@@ -52,14 +41,14 @@ const sizes: Record<string, string> = {
       </a>
     </div>
 
-    <div class="gallery__grid">
+    <div class="gallery__grid" tabindex="0" role="region" aria-label={t.gallery.title}>
       {t.gallery.items.map((item, i) => (
-        <figure class={`gallery__item gallery__item--${item.key}`} data-reveal style={`--delay: ${i * 70}ms`}>
+        <figure class="gallery__item" data-reveal style={`--delay: ${i * 70}ms`}>
           <Image
             src={images[item.key]}
             alt={item.alt}
-            widths={widths[item.key]}
-            sizes={sizes[item.key]}
+            widths={widths}
+            sizes={sizes}
           />
           <figcaption>{item.caption}</figcaption>
         </figure>

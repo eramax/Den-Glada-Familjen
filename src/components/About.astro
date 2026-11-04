@@ -45,7 +45,6 @@ const principleIcons = ['home', 'users', 'sparkles'];
       <p class="eyebrow">{t.about.eyebrow}</p>
       <h2>{t.about.title}</h2>
       <p class="about__lead">{t.about.lead}</p>
-      {t.about.body.map((paragraph) => <p class="about__text">{paragraph}</p>)}
 
       <ul class="principles">
         {t.about.principles.map((principle, i) => (
@@ -65,11 +64,11 @@ const principleIcons = ['home', 'users', 'sparkles'];
           <Icon name="plus" />
         </summary>
         <div class="about__more-body">
+          {t.about.body.map((paragraph) => <p>{paragraph}</p>)}
           {t.about.more.map((paragraph) => <p>{paragraph}</p>)}
+          <blockquote class="about__quote">{t.about.quote}</blockquote>
         </div>
       </details>
-
-      <blockquote class="about__quote">{t.about.quote}</blockquote>
     </div>
   </div>
 </section>

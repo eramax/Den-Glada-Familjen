@@ -1,0 +1,50 @@
+---
+import Icon from './Icon.astro';
+import { latestMeetings } from '../data/meetings';
+import { meetingPaths } from '../i18n';
+import { formatMeetingDate } from '../lib/format';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { lang, t } = Astro.props;
+const meeting = latestMeetings[0];
+const meetingPath = meetingPaths[lang];
+---
+
+{meeting && (
+  <section class="next-meeting" id="next-meeting" aria-labelledby="next-meeting-title">
+    <div class="container">
+      <div class="next-meeting__card" data-reveal>
+        <div class="next-meeting__when">
+          <span class="next-meeting__icon"><Icon name="calendar" /></span>
+          <span class="next-meeting__when-copy">
+            <span class="next-meeting__label">{t.meetingsPage.nextLabel}</span>
+            <strong class="next-meeting__date">{formatMeetingDate(meeting.date, lang)}</strong>
+            <span class="next-meeting__time"><bdi dir="ltr">{t.meetingsPage.scheduleTime}</bdi></span>
+            <span class="next-meeting__venue"><Icon name="mapPin" /> {t.meetingsPage.venueShort}</span>
+          </span>
+        </div>
+
+        <div class="next-meeting__copy">
+          <span class="next-meeting__tag">{meeting.tag[lang]}</span>
+          <h2 id="next-meeting-title">{meeting.topic[lang]}</h2>
+          <p>{meeting.summary[lang]}</p>
+        </div>
+
+        <div class="next-meeting__actions">
+          <a class="btn btn--primary" href={`${meetingPath}#${meeting.id}`}>
+            {t.meetingsPage.detailsLabel}
+            <Icon name="arrowRight" class="icon--arrow" />
+          </a>
+          <a class="next-meeting__all" href={meetingPath}>
+            {t.meetingsPage.ctaLanding}
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+)}

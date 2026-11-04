@@ -73,8 +73,8 @@ export const meetings: Meeting[] = [
       sv: 'Kreativa aktiviteter och samarbetslekar som stärker förmågan att uttrycka känslor.',
     },
     lecture: {
-      ar: 'محاضرة تعليمية بعنوان «التواصل بين أفراد الأسرة».',
-      sv: 'Föreläsning med temat ”Kommunikation i familjen”.',
+      ar: 'محاضرة تعليمية بعنوان «التواصل بين أفراد الأسرة» بالتعاون مع ABF.',
+      sv: 'Föreläsning med temat ”Kommunikation i familjen” i samarbete med ABF.',
     },
     images: [
       {
@@ -139,8 +139,8 @@ export const meetings: Meeting[] = [
       sv: 'Grupplekar, målning och tävlingar i en trygg och rolig miljö.',
     },
     lecture: {
-      ar: 'محاضرة تعليمية بعنوان «حل النزاع بين أفراد الأسرة».',
-      sv: 'Föreläsning med temat ”Konflikthantering i familjen”.',
+      ar: 'محاضرة تعليمية بعنوان «حل النزاع بين أفراد الأسرة» بالتعاون مع ABF.',
+      sv: 'Föreläsning med temat ”Konflikthantering i familjen” i samarbete med ABF.',
     },
     images: [
       {
@@ -162,6 +162,72 @@ export const meetings: Meeting[] = [
         alt: {
           ar: 'عائلة تتناول الطعام معًا',
           sv: 'En familj som äter tillsammans',
+        },
+      },
+    ],
+    video: {
+      url: SITE.youtube,
+      label: {
+        ar: 'شاهد التسجيلات على يوتيوب',
+        sv: 'Se inspelningar på YouTube',
+      },
+      note: {
+        ar: 'تجدون تسجيلات اللقاءات على قناة الجمعية.',
+        sv: 'Du hittar inspelningar från mötena på föreningens kanal.',
+      },
+    },
+  },
+  {
+    id: '2026-10-25',
+    date: '2026-10-25',
+    tag: {
+      ar: 'اللقاء الأول',
+      sv: 'Första mötet',
+    },
+    topic: {
+      ar: 'لقاء تعارف وتقديم الجمعية',
+      sv: 'Introduktionsmöte',
+    },
+    summary: {
+      ar: 'أول لقاء تعارف بين الأعضاء في مكاتب ABF، تعرّفنا فيه على الجمعية وأهدافها وأنشطتها، وبدأنا بناء مجتمع دافئ للعائلات.',
+      sv: 'Första mötet i ABF-huset där vi lärde känna varandra och presenterade föreningen, dess mål och aktiviteter.',
+    },
+    takeaway: {
+      ar: 'كل رحلة تبدأ بلقاء، وكل لقاء يبدأ بألفة.',
+      sv: 'Varje resa börjar med ett möte – och varje möte börjar med gemenskap.',
+    },
+    adults: {
+      ar: 'تعارف وحوار حول أهداف الجمعية وأنشطتها.',
+      sv: 'Mingel och samtal om föreningens mål och aktiviteter.',
+    },
+    children: {
+      ar: 'ألعاب تعارف ومساحة آمنة للأطفال.',
+      sv: 'Lära-känna-lekar och en trygg plats för barnen.',
+    },
+    lecture: {
+      ar: 'تعريف بالجمعية ورسالتها.',
+      sv: 'Presentation av föreningen och dess vision.',
+    },
+    images: [
+      {
+        src: galleryCommunity,
+        alt: {
+          ar: 'لقاء تعارف بين أعضاء الجمعية',
+          sv: 'Ett introduktionsmöte med föreningens medlemmar',
+        },
+      },
+      {
+        src: galleryKids,
+        alt: {
+          ar: 'أطفال يشاركون في نشاط فني',
+          sv: 'Barn som deltar i en konstaktivitet',
+        },
+      },
+      {
+        src: meetingDialogue,
+        alt: {
+          ar: 'عائلة تتحدث وتضحك معًا في المنزل',
+          sv: 'En familj som pratar och skrattar tillsammans hemma',
         },
       },
     ],

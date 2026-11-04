@@ -15,16 +15,6 @@ const { t } = Astro.props;
     <div class="faq__intro" data-reveal>
       <p class="eyebrow">{t.faq.eyebrow}</p>
       <h2>{t.faq.title}</h2>
-
-      <div class="faq__help">
-        <span class="faq__help-icon"><Icon name="heart" /></span>
-        <h3>{t.faq.helpTitle}</h3>
-        <p>{t.faq.helpText}</p>
-        <a class="btn btn--outline" href="#contact">
-          {t.faq.helpCta}
-          <Icon name="arrowRight" class="icon--arrow" />
-        </a>
-      </div>
     </div>
 
     <div class="faq__list">
@@ -37,6 +27,10 @@ const { t } = Astro.props;
           <div class="faq__answer">{item.a}</div>
         </details>
       ))}
+      <a class="faq__contact" href="#contact">
+        {t.faq.helpCta}
+        <Icon name="arrowRight" class="icon--arrow" />
+      </a>
     </div>
   </div>
 </section>

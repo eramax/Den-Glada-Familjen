@@ -191,8 +191,12 @@ export interface Dict {
     scheduleLabel: string;
     scheduleTime: string;
     scheduleNote: string;
+    nextLabel: string;
     locationLabel: string;
     location: string;
+    venueShort: string;
+    amenities: string;
+    partner: string;
     formatLabel: string;
     formatTitle: string;
     formatLead: string;
