@@ -1,0 +1,210 @@
+---
+import '../styles/fonts.css';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+import { SITE } from '../data/site';
+import { paths } from '../i18n';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { lang, t } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(lang === 'ar' ? '/og-image-ar.jpg' : '/og-image-sv.jpg', Astro.site);
+const arUrl = new URL(paths.ar, Astro.site);
+const svUrl = new URL(paths.sv, Astro.site);
+const ogLocaleAlt = lang === 'ar' ? 'sv_SE' : 'ar_SE';
+
+const organizationLd = {
+  '@context': 'https://schema.org',
+  '@type': 'NGO',
+  name: 'Föreningen Den Glada Familjen',
+  alternateName: 'جمعية الأسرة السعيدة',
+  url: new URL('/', Astro.site).href,
+  logo: new URL('/favicon-512.png', Astro.site).href,
+  image: ogImage.href,
+  description: t.meta.description,
+  email: SITE.email,
+  telephone: SITE.phone,
+  foundingDate: SITE.founded,
+  identifier: SITE.orgNumber,
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Västerås',
+    addressCountry: 'SE',
+  },
+  areaServed: {
+    '@type': 'City',
+    name: 'Västerås',
+  },
+  sameAs: [SITE.youtube, SITE.tiktok],
+};
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: t.faq.items.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.a,
+    },
+  })),
+};
+---
+
+<!doctype html>
+<html lang={lang} dir={t.dir}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t.meta.title}</title>
+    <meta name="description" content={t.meta.description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="ar" href={arUrl} />
+    <link rel="alternate" hreflang="sv" href={svUrl} />
+    <link rel="alternate" hreflang="x-default" href={arUrl} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0B3F73" />
+    <meta name="author" content="Föreningen Den Glada Familjen" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={t.brand.name} />
+    <meta property="og:title" content={t.meta.title} />
+    <meta property="og:description" content={t.meta.description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={t.brand.name} />
+    <meta property="og:locale" content={t.meta.ogLocale} />
+    <meta property="og:locale:alternate" content={ogLocaleAlt} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={t.meta.title} />
+    <meta name="twitter:description" content={t.meta.description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(organizationLd)} />
+    <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
+    <slot name="head" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">{t.a11y.skip}</a>
+    <Header lang={lang} t={t} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} t={t} />
+
+    <button class="to-top" type="button" data-to-top aria-label={t.a11y.backToTop}>
+      <Icon name="arrowUp" />
+    </button>
+
+    <noscript>
+      <style>
+        [data-reveal] { opacity: 1 !important; transform: none !important; }
+      </style>
+    </noscript>
+
+    <script>
+      const header = document.querySelector<HTMLElement>('[data-header]');
+      const toTop = document.querySelector<HTMLButtonElement>('[data-to-top]');
+      const menu = document.querySelector<HTMLDialogElement>('#mobile-menu');
+      const menuOpen = document.querySelector<HTMLButtonElement>('[data-menu-open]');
+      const menuClose = document.querySelector<HTMLButtonElement>('[data-menu-close]');
+
+      const updateScrollUi = () => {
+        const y = window.scrollY;
+        header?.classList.toggle('is-scrolled', y > 8);
+        toTop?.classList.toggle('is-visible', y > 700);
+      };
+
+      updateScrollUi();
+      window.addEventListener('scroll', updateScrollUi, { passive: true });
+
+      if (menu && menuOpen) {
+        menuOpen.addEventListener('click', () => {
+          if (!menu.open) {
+            menu.showModal();
+            document.body.style.overflow = 'hidden';
+          }
+        });
+
+        menu.addEventListener('close', () => {
+          document.body.style.overflow = '';
+        });
+
+        menuClose?.addEventListener('click', () => menu.close());
+
+        menu.querySelectorAll<HTMLAnchorElement>('[data-menu-link]').forEach((link) => {
+          link.addEventListener('click', () => menu.close());
+        });
+
+        window.addEventListener('resize', () => {
+          if (window.innerWidth >= 1000 && menu.open) {
+            menu.close();
+          }
+        });
+      }
+
+      toTop?.addEventListener('click', () => {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      });
+
+      const revealItems = document.querySelectorAll<HTMLElement>('[data-reveal]');
+
+      if (revealItems.length) {
+        if ('IntersectionObserver' in window) {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add('is-visible');
+                  observer.unobserve(entry.target);
+                }
+              });
+            },
+            { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
+          );
+
+          revealItems.forEach((item) => observer.observe(item));
+        } else {
+          revealItems.forEach((item) => item.classList.add('is-visible'));
+        }
+      }
+
+      const contactForm = document.querySelector<HTMLFormElement>('[data-contact-form]');
+
+      contactForm?.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const data = new FormData(contactForm);
+        const name = String(data.get('name') ?? '');
+        const email = String(data.get('email') ?? '');
+        const message = String(data.get('message') ?? '');
+        const subject = contactForm.dataset.subject ?? '';
+        const body = `${name}\n${email}\n\n${message}`;
+        const status = contactForm.querySelector<HTMLElement>('[data-form-status]');
+
+        if (status) {
+          status.textContent = contactForm.dataset.opening ?? '';
+        }
+
+        window.location.href = `mailto:${contactForm.dataset.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      });
+    </script>
+  </body>
+</html>

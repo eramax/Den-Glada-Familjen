@@ -1,0 +1,27 @@
+---
+import Icon from './Icon.astro';
+import { langNames, otherLang, paths } from '../i18n';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+  full?: boolean;
+}
+
+const { lang, t, full = false } = Astro.props;
+const target = otherLang(lang);
+const href = paths[target];
+const label = langNames[target];
+const short = target === 'sv' ? 'SV' : 'AR';
+---
+
+<a
+  class:list={['lang-switch', { 'lang-switch--full': full }]}
+  href={href}
+  hreflang={target}
+  lang={target}
+>
+  <Icon name="globe" />
+  {full ? <span>{label}</span> : <><span class="lang-switch__short">{short}</span><span class="lang-switch__full">{label}</span><span class="sr-only">{t.a11y.langSwitch}</span></>}
+</a>

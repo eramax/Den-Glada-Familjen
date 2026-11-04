@@ -1,0 +1,73 @@
+---
+import { Image } from 'astro:assets';
+import galleryCommunity from '../assets/images/gallery-community.jpg';
+import galleryKids from '../assets/images/gallery-kids.jpg';
+import galleryTrip from '../assets/images/gallery-trip.jpg';
+import galleryDinner from '../assets/images/gallery-dinner.jpg';
+import Icon from './Icon.astro';
+import { SITE } from '../data/site';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { t } = Astro.props;
+
+const images = {
+  community: galleryCommunity,
+  kids: galleryKids,
+  trip: galleryTrip,
+  dinner: galleryDinner,
+};
+
+const widths: Record<string, number[]> = {
+  community: [600, 900, 1200],
+  kids: [400, 600, 800],
+  trip: [400, 600, 800],
+  dinner: [400, 600, 800],
+};
+
+const sizes: Record<string, string> = {
+  community: '(max-width: 900px) 100vw, 50vw',
+  kids: '(max-width: 900px) 50vw, 25vw',
+  trip: '(max-width: 900px) 50vw, 25vw',
+  dinner: '(max-width: 900px) 100vw, 25vw',
+};
+---
+
+<section class="section gallery" id="gallery">
+  <div class="container">
+    <div class="section-head section-head--split" data-reveal>
+      <div>
+        <p class="eyebrow">{t.gallery.eyebrow}</p>
+        <h2>{t.gallery.title}</h2>
+        <p>{t.gallery.lead}</p>
+      </div>
+      <a class="btn btn--outline gallery__yt" href={SITE.youtube} target="_blank" rel="noopener noreferrer">
+        <Icon name="youtube" />
+        {t.gallery.youtubeCta}
+        <span class="sr-only">({t.a11y.external})</span>
+      </a>
+    </div>
+
+    <div class="gallery__grid">
+      {t.gallery.items.map((item, i) => (
+        <figure class={`gallery__item gallery__item--${item.key}`} data-reveal style={`--delay: ${i * 70}ms`}>
+          <Image
+            src={images[item.key]}
+            alt={item.alt}
+            widths={widths[item.key]}
+            sizes={sizes[item.key]}
+          />
+          <figcaption>{item.caption}</figcaption>
+        </figure>
+      ))}
+    </div>
+
+    <div class="gallery__foot">
+      <span class="gallery__note">{t.gallery.note}</span>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,42 @@
+---
+import Icon from './Icon.astro';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { t } = Astro.props;
+---
+
+<section class="section faq" id="faq">
+  <div class="container faq__grid">
+    <div class="faq__intro" data-reveal>
+      <p class="eyebrow">{t.faq.eyebrow}</p>
+      <h2>{t.faq.title}</h2>
+
+      <div class="faq__help">
+        <span class="faq__help-icon"><Icon name="heart" /></span>
+        <h3>{t.faq.helpTitle}</h3>
+        <p>{t.faq.helpText}</p>
+        <a class="btn btn--outline" href="#contact">
+          {t.faq.helpCta}
+          <Icon name="arrowRight" class="icon--arrow" />
+        </a>
+      </div>
+    </div>
+
+    <div class="faq__list">
+      {t.faq.items.map((item, i) => (
+        <details class="faq__item" data-reveal style={`--delay: ${i * 60}ms`}>
+          <summary>
+            <span>{item.q}</span>
+            <Icon name="plus" />
+          </summary>
+          <div class="faq__answer">{item.a}</div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

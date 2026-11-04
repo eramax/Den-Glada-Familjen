@@ -1,0 +1,26 @@
+---
+import type { Dict } from '../i18n';
+
+interface Props {
+  t: Dict;
+}
+
+const { t } = Astro.props;
+const quoteLabel = t.motto.parts.join(' – ');
+---
+
+<section class="section motto" id="vision">
+  <div class="motto__arches" aria-hidden="true"></div>
+  <div class="container motto__inner" data-reveal>
+    <p class="eyebrow">{t.motto.eyebrow}</p>
+    <blockquote class="motto__quote" aria-label={quoteLabel}>
+      {t.motto.parts.map((part, i) => (
+        <>
+          <span class="motto__part">{part}</span>
+          {i < t.motto.parts.length - 1 && <span class="motto__sep" aria-hidden="true"></span>}
+        </>
+      ))}
+    </blockquote>
+    <p class="motto__text">{t.motto.text}</p>
+  </div>
+</section>

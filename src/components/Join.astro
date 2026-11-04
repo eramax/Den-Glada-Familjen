@@ -1,0 +1,60 @@
+---
+import Icon from './Icon.astro';
+import { SITE } from '../data/site';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { t } = Astro.props;
+---
+
+<section class="section join" id="join">
+  <div class="container join__grid">
+    <div class="join__content" data-reveal>
+      <p class="eyebrow">{t.join.eyebrow}</p>
+      <h2>{t.join.title}</h2>
+      <p class="join__lead">{t.join.lead}</p>
+
+      <ol class="steps">
+        {t.join.steps.map((step, i) => (
+          <li class="step">
+            <span class="step__num">{String(i + 1).padStart(2, '0')}</span>
+            <div>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+
+    <div class="join__panel" data-reveal style="--delay: 120ms">
+      <p class="eyebrow">{t.join.panelEyebrow}</p>
+      <h3>{t.join.panelTitle}</h3>
+      <p>{t.join.panelText}</p>
+
+      <div class="join__actions">
+        <a class="btn btn--whatsapp" href={SITE.whatsappGroup} target="_blank" rel="noopener">
+          <Icon name="whatsapp" />
+          {t.join.whatsapp}
+        </a>
+        <a class="btn btn--light" href={`mailto:${SITE.email}`}>
+          <Icon name="mail" />
+          {t.join.email}
+        </a>
+      </div>
+
+      <a class="join__phone" href={SITE.whatsappDirect} target="_blank" rel="noopener">
+        <Icon name="phone" />
+        <span>{t.join.phoneLabel}:</span>
+        <span dir="ltr">{SITE.phoneDisplay}</span>
+      </a>
+
+      <p class="join__note">{t.join.note}</p>
+      <span class="join__deco" aria-hidden="true"><Icon name="heartFilled" /></span>
+    </div>
+  </div>
+</section>

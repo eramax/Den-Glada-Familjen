@@ -1,0 +1,75 @@
+---
+import { Image } from 'astro:assets';
+import aboutMain from '../assets/images/about-main.jpg';
+import aboutSmall from '../assets/images/about-small.jpg';
+import Icon from './Icon.astro';
+import { SITE } from '../data/site';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { t } = Astro.props;
+const principleIcons = ['home', 'users', 'sparkles'];
+---
+
+<section class="section about" id="about">
+  <div class="container about__grid">
+    <div class="about__media" data-reveal>
+      <div class="about__main">
+        <Image
+          src={aboutMain}
+          alt={t.about.imageAltMain}
+          widths={[560, 800, 1100]}
+          sizes="(max-width: 960px) 90vw, 45vw"
+        />
+      </div>
+      <div class="about__small">
+        <Image
+          src={aboutSmall}
+          alt={t.about.imageAltSmall}
+          widths={[240, 360, 480]}
+          sizes="(max-width: 960px) 42vw, 18vw"
+        />
+      </div>
+      <div class="about__stamp">
+        <strong>{SITE.founded}</strong>
+        <span>{t.about.foundedLabel}</span>
+        <small>{t.about.cityLabel}</small>
+      </div>
+    </div>
+
+    <div class="about__content" data-reveal style="--delay: 120ms">
+      <p class="eyebrow">{t.about.eyebrow}</p>
+      <h2>{t.about.title}</h2>
+      <p class="about__lead">{t.about.lead}</p>
+      {t.about.body.map((paragraph) => <p class="about__text">{paragraph}</p>)}
+
+      <ul class="principles">
+        {t.about.principles.map((principle, i) => (
+          <li class="principle">
+            <span class="principle__icon"><Icon name={principleIcons[i]} /></span>
+            <div>
+              <strong>{principle.title}</strong>
+              <p>{principle.text}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <details class="about__more">
+        <summary>
+          <span>{t.about.moreLabel}</span>
+          <Icon name="plus" />
+        </summary>
+        <div class="about__more-body">
+          {t.about.more.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </details>
+
+      <blockquote class="about__quote">{t.about.quote}</blockquote>
+    </div>
+  </div>
+</section>

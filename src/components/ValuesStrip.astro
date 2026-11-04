@@ -1,0 +1,20 @@
+---
+import type { Dict } from '../i18n';
+
+interface Props {
+  t: Dict;
+}
+
+const { t } = Astro.props;
+---
+
+<section class="values" aria-label={t.values.label}>
+  <div class="container values__inner">
+    <span class="values__label">{t.values.label}</span>
+    <ul class="values__list">
+      {t.values.items.map((item) => (
+        <li class="values__item">{item}</li>
+      ))}
+    </ul>
+  </div>
+</section>

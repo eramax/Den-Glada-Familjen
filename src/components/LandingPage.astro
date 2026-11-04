@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from './Hero.astro';
+import ValuesStrip from './ValuesStrip.astro';
+import About from './About.astro';
+import Activities from './Activities.astro';
+import Motto from './Motto.astro';
+import Gallery from './Gallery.astro';
+import Join from './Join.astro';
+import Faq from './Faq.astro';
+import Contact from './Contact.astro';
+import { getDict } from '../i18n';
+import type { Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = getDict(lang);
+---
+
+<BaseLayout lang={lang} t={t}>
+  <Hero lang={lang} t={t} />
+  <ValuesStrip t={t} />
+  <About lang={lang} t={t} />
+  <Activities lang={lang} t={t} />
+  <Motto t={t} />
+  <Gallery lang={lang} t={t} />
+  <Join lang={lang} t={t} />
+  <Faq lang={lang} t={t} />
+  <Contact lang={lang} t={t} />
+</BaseLayout>

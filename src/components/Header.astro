@@ -1,0 +1,67 @@
+---
+import { Image } from 'astro:assets';
+import logoMark from '../assets/images/logo-mark.png';
+import Icon from './Icon.astro';
+import LanguageSwitch from './LanguageSwitch.astro';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { lang, t } = Astro.props;
+---
+
+<header class="site-header" data-header>
+  <div class="container header__inner">
+    <a class="brand" href="#home">
+      <span class="brand__mark">
+        <Image src={logoMark} alt="" width={46} height={46} loading="eager" />
+      </span>
+      <span class="brand__name">
+        <strong>{t.brand.name}</strong>
+        <span lang={lang === 'ar' ? 'sv' : 'ar'}>{t.brand.nameAlt}</span>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label={t.nav.menu}>
+      <ul>
+        {t.nav.items.map((item) => (
+          <li><a href={`#${item.id}`}>{item.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <LanguageSwitch lang={lang} t={t} />
+      <a class="btn btn--primary header__cta" href="#join">{t.nav.join}</a>
+      <button class="menu-btn" type="button" data-menu-open aria-label={t.a11y.menuLabel} aria-haspopup="dialog">
+        <Icon name="menu" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<dialog class="mobile-menu" id="mobile-menu" aria-label={t.nav.menu}>
+  <div class="mobile-menu__head">
+    <span class="brand__name">
+      <strong>{t.brand.name}</strong>
+      <span lang={lang === 'ar' ? 'sv' : 'ar'}>{t.brand.nameAlt}</span>
+    </span>
+    <button class="menu-btn" type="button" data-menu-close aria-label={t.a11y.closeMenuLabel}>
+      <Icon name="close" />
+    </button>
+  </div>
+
+  <nav class="mobile-menu__nav" aria-label={t.nav.menu}>
+    <ul>
+      {t.nav.items.map((item) => (
+        <li><a href={`#${item.id}`} data-menu-link>{item.label}</a></li>
+      ))}
+    </ul>
+  </nav>
+
+  <a class="btn btn--primary mobile-menu__cta" href="#join" data-menu-link>{t.nav.join}</a>
+  <LanguageSwitch lang={lang} t={t} full />
+</dialog>

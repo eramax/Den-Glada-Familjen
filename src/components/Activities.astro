@@ -1,0 +1,45 @@
+---
+import Icon from './Icon.astro';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { t } = Astro.props;
+---
+
+<section class="section activities" id="activities">
+  <div class="container">
+    <div class="section-head" data-reveal>
+      <p class="eyebrow">{t.activities.eyebrow}</p>
+      <h2>{t.activities.title}</h2>
+      <p>{t.activities.lead}</p>
+    </div>
+
+    <div class="activities__grid">
+      {t.activities.items.map((item, i) => (
+        <article class={`activity tone-${item.tone}`} data-reveal style={`--delay: ${i * 60}ms`}>
+          <div class="activity__top">
+            <span class="activity__icon"><Icon name={item.icon} /></span>
+            <span class="activity__num">{String(i + 1).padStart(2, '0')}</span>
+          </div>
+          <h3>{item.title}</h3>
+          <p>{item.text}</p>
+        </article>
+      ))}
+    </div>
+
+    <div class="activities__cta" data-reveal>
+      <div>
+        <h3>{t.activities.ctaTitle}</h3>
+        <p>{t.activities.ctaText}</p>
+      </div>
+      <a class="btn btn--amber" href="#contact">
+        {t.activities.ctaLink}
+        <Icon name="arrowRight" class="icon--arrow" />
+      </a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,96 @@
+---
+import { Image } from 'astro:assets';
+import logoFull from '../assets/images/logo-full.png';
+import Icon from './Icon.astro';
+import { SITE } from '../data/site';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { t } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <a class="footer__logo" href="#home" aria-label={t.brand.name}>
+          <Image src={logoFull} alt={t.a11y.logoAlt} width={190} loading="eager" />
+        </a>
+        <p>{t.footer.about}</p>
+        <p class="footer__made">{t.footer.made}</p>
+      </div>
+
+      <div class="footer__col">
+        <h3>{t.footer.quickLinks}</h3>
+        <ul class="footer__links">
+          {t.nav.items.map((item) => (
+            <li><a href={`#${item.id}`}>{item.label}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h3>{t.footer.contactTitle}</h3>
+        <div class="footer__contact">
+          <a href={`mailto:${SITE.email}`}>
+            <Icon name="mail" />
+            <span dir="ltr">{SITE.email}</span>
+          </a>
+          <a href={SITE.whatsappDirect} target="_blank" rel="noopener">
+            <Icon name="whatsapp" />
+            <span dir="ltr">{SITE.phoneDisplay}</span>
+          </a>
+          <span>
+            <Icon name="mapPin" />
+            {t.contact.location}
+          </span>
+        </div>
+      </div>
+
+      <div class="footer__col">
+        <h3>{t.footer.followTitle}</h3>
+        <div class="socials socials--footer">
+          <a
+            href={SITE.youtube}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${t.contact.socials.youtube} — ${t.a11y.external}`}
+          >
+            <Icon name="youtube" />
+          </a>
+          <a
+            href={SITE.tiktok}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${t.contact.socials.tiktok} — ${t.a11y.external}`}
+          >
+            <Icon name="tiktok" />
+          </a>
+          <a
+            href={SITE.whatsappDirect}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${t.contact.socials.whatsapp} — ${t.a11y.external}`}
+          >
+            <Icon name="whatsapp" />
+          </a>
+        </div>
+        <p class="footer__org">
+          <span>{t.footer.orgLabel}</span>
+          <span dir="ltr">{SITE.orgNumber}</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span>© {year} {t.footer.copyright}</span>
+      <span>{t.footer.privacy}</span>
+      <a href="#home">{t.footer.backToTop} <Icon name="arrowUp" /></a>
+    </div>
+  </div>
+</footer>

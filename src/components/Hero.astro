@@ -1,0 +1,99 @@
+---
+import { Image } from 'astro:assets';
+import heroImg from '../assets/images/hero.jpg';
+import logoMark from '../assets/images/logo-mark.png';
+import Icon from './Icon.astro';
+import { SITE } from '../data/site';
+import type { Dict, Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+
+const { t } = Astro.props;
+---
+
+<section class="hero" id="home">
+  <div class="hero__bg" aria-hidden="true"></div>
+
+  <div class="container">
+    <div class="hero__grid">
+      <div class="hero__content" data-reveal>
+        <p class="eyebrow">{t.hero.eyebrow}</p>
+        <h1>
+          <span class="hero__title-line">{t.hero.titleLine1}</span>
+          <span class="hero__title-line hero__title-line--accent">{t.hero.titleLine2}</span>
+          <span class="hero__title-highlight">{t.hero.titleHighlight}</span>
+        </h1>
+        <p class="hero__lead">{t.hero.lead}</p>
+
+        <div class="hero__actions">
+          <a class="btn btn--whatsapp" href={SITE.whatsappGroup} target="_blank" rel="noopener">
+            <Icon name="whatsapp" />
+            {t.hero.primaryCta}
+          </a>
+          <a class="btn btn--outline" href="#about">
+            {t.hero.secondaryCta}
+            <Icon name="arrowDown" class="icon--arrow" />
+          </a>
+        </div>
+
+        <ul class="hero__trust">
+          {t.hero.trust.map((item) => (
+            <li><Icon name="check" /> {item}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="hero__visual" data-reveal style="--delay: 140ms">
+        <div class="hero__arch">
+          <Image
+            src={heroImg}
+            alt={t.hero.imageAlt}
+            widths={[480, 720, 960]}
+            sizes="(max-width: 960px) 90vw, 46vw"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </div>
+
+        <div class="hero__badge">
+          <span class="hero__badge-icon"><Icon name="sparkles" /></span>
+          <span class="hero__badge-text">
+            <strong>{t.hero.badgeTop}</strong>
+            <small>{t.hero.badgeTopSub}</small>
+          </span>
+        </div>
+
+        <div class="hero__ribbon">{t.hero.badgeBottom}</div>
+
+        <div class="hero__seal" aria-hidden="true">
+          <svg class="hero__seal-ring" viewBox="0 0 120 120">
+            <defs>
+              <path id="seal-circle" d="M 60,60 m -44,0 a 44,44 0 1,1 88,0 a 44,44 0 1,1 -88,0" />
+            </defs>
+            <text>
+              <textPath href="#seal-circle" startOffset="0%">{t.hero.circularText}</textPath>
+            </text>
+          </svg>
+          <span class="hero__seal-mark">
+            <Image src={logoMark} alt="" width={64} height={64} loading="eager" />
+          </span>
+        </div>
+
+        <span class="hero__spark hero__spark--1" aria-hidden="true"><Icon name="sparkle" /></span>
+        <span class="hero__spark hero__spark--2" aria-hidden="true"><Icon name="sparkle" /></span>
+      </div>
+    </div>
+
+    <ul class="stats">
+      {t.stats.map((stat, i) => (
+        <li class="stat" data-reveal style={`--delay: ${i * 80}ms`}>
+          <span class="stat__value">{stat.value}</span>
+          <span class="stat__label">{stat.label}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
