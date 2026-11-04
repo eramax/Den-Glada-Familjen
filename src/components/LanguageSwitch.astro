@@ -1,17 +1,17 @@
 ---
 import Icon from './Icon.astro';
-import { langNames, otherLang, paths } from '../i18n';
+import { langNames, otherLang } from '../i18n';
 import type { Dict, Lang } from '../i18n';
 
 interface Props {
   lang: Lang;
   t: Dict;
+  href: string;
   full?: boolean;
 }
 
-const { lang, t, full = false } = Astro.props;
+const { lang, t, href, full = false } = Astro.props;
 const target = otherLang(lang);
-const href = paths[target];
 const label = langNames[target];
 const short = target === 'sv' ? 'SV' : 'AR';
 ---

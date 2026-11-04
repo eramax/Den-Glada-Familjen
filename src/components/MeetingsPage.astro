@@ -1,0 +1,205 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from './Icon.astro';
+import { meetings } from '../data/meetings';
+import { getDict, paths } from '../i18n';
+import { formatMeetingDate } from '../lib/format';
+import { SITE } from '../data/site';
+import type { Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = getDict(lang);
+const homePath = paths[lang];
+const photoSizes = '(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 30vw';
+---
+
+<BaseLayout
+  lang={lang}
+  t={t}
+  title={t.meetingsPage.metaTitle}
+  description={t.meetingsPage.metaDescription}
+  faqLd={false}
+>
+  <section class="meetings-hero" id="home">
+    <div class="meetings-hero__bg" aria-hidden="true"></div>
+    <div class="container meetings-hero__grid">
+      <div class="meetings-hero__content" data-reveal>
+        <p class="eyebrow">{t.meetingsPage.eyebrow}</p>
+        <h1>{t.meetingsPage.title}</h1>
+        <p class="meetings-hero__lead">{t.meetingsPage.lead}</p>
+        <div class="meetings-hero__actions">
+          <a class="btn btn--whatsapp" href={SITE.whatsappGroup} target="_blank" rel="noopener noreferrer">
+            <Icon name="whatsapp" />
+            {t.meetingsPage.ctaWhatsapp}
+          </a>
+          <a class="btn btn--outline" href={homePath}>
+            {t.meetingsPage.backHome}
+          </a>
+        </div>
+      </div>
+
+      <div class="meetings-hero__card" data-reveal style="--delay: 120ms">
+        <span class="meetings-hero__card-icon"><Icon name="calendar" /></span>
+        <span class="meetings-hero__card-label">{t.meetingsPage.scheduleLabel}</span>
+        <strong class="meetings-hero__card-time"><bdi dir="ltr">{t.meetingsPage.scheduleTime}</bdi></strong>
+        <p>{t.meetingsPage.scheduleNote}</p>
+        <div class="meetings-hero__card-meta">
+          <span><Icon name="mapPin" /> {t.meetingsPage.location}</span>
+        </div>
+        <span class="meetings-hero__card-deco" aria-hidden="true"><Icon name="sparkles" /></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section meetings-format">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">{t.meetingsPage.formatLabel}</p>
+        <h2>{t.meetingsPage.formatTitle}</h2>
+        <p>{t.meetingsPage.formatLead}</p>
+      </div>
+
+      <div class="meetings-format__grid">
+        {t.meetingsPage.formatCards.map((card, i) => (
+          <article class="meetings-format__card" data-reveal style={`--delay: ${i * 70}ms`}>
+            <span class="meetings-format__icon"><Icon name={card.icon} /></span>
+            <h3>{card.title}</h3>
+            <p>{card.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section meetings-timeline">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">{t.meetingsPage.timelineLabel}</p>
+        <h2>{t.meetingsPage.timelineTitle}</h2>
+        <p>{t.meetingsPage.timelineLead}</p>
+      </div>
+
+      <div class="timeline">
+        {meetings.map((meeting, index) => (
+          <article class="timeline__item" id={meeting.id} data-reveal style={`--delay: ${index * 80}ms`}>
+            <span class="timeline__marker" aria-hidden="true"></span>
+            <div class="timeline__card">
+              <header class="timeline__head">
+                <div class="timeline__meta">
+                  <span class="timeline__date">
+                    <Icon name="calendar" />
+                    {formatMeetingDate(meeting.date, lang)}
+                  </span>
+                  <span class="timeline__tag">{meeting.tag[lang]}</span>
+                </div>
+                <h2>{meeting.topic[lang]}</h2>
+                <p class="timeline__summary">{meeting.summary[lang]}</p>
+              </header>
+
+              <div class="timeline__details">
+                <div class="timeline__detail">
+                  <span class="timeline__detail-icon"><Icon name="users" /></span>
+                  <div>
+                    <strong>{t.meetingsPage.adultsLabel}</strong>
+                    <p>{meeting.adults[lang]}</p>
+                  </div>
+                </div>
+                <div class="timeline__detail">
+                  <span class="timeline__detail-icon"><Icon name="palette" /></span>
+                  <div>
+                    <strong>{t.meetingsPage.childrenLabel}</strong>
+                    <p>{meeting.children[lang]}</p>
+                  </div>
+                </div>
+                <div class="timeline__detail">
+                  <span class="timeline__detail-icon"><Icon name="mic" /></span>
+                  <div>
+                    <strong>{t.meetingsPage.lectureLabel}</strong>
+                    <p>{meeting.lecture[lang]}</p>
+                  </div>
+                </div>
+              </div>
+
+              <blockquote class="timeline__takeaway">
+                <Icon name="sparkles" />
+                <span><strong>{t.meetingsPage.takeawayLabel}:</strong> {meeting.takeaway[lang]}</span>
+              </blockquote>
+
+              <div class="timeline__media">
+                <p class="timeline__media-label">{t.meetingsPage.photosLabel}</p>
+                <div class="timeline__photos">
+                  {meeting.images.map((image, i) => (
+                    <figure class:list={['timeline__photo', { 'timeline__photo--wide': i === 0 }]}>
+                      <Image
+                        src={image.src}
+                        alt={image.alt[lang]}
+                        widths={[400, 640, 900]}
+                        sizes={photoSizes}
+                        loading="lazy"
+                      />
+                    </figure>
+                  ))}
+                </div>
+
+                <a class="timeline__video" href={meeting.video.url} target="_blank" rel="noopener noreferrer">
+                  <span class="timeline__video-icon"><Icon name="youtube" /></span>
+                  <span class="timeline__video-copy">
+                    <strong>{t.meetingsPage.videoLabel}: {meeting.video.label[lang]}</strong>
+                    <small>{meeting.video.note[lang]}</small>
+                  </span>
+                  <Icon name="external" class="timeline__video-external" />
+                </a>
+              </div>
+            </div>
+          </article>
+        ))}
+
+        <div class="timeline__end" data-reveal>
+          <span class="timeline__end-dot" aria-hidden="true"></span>
+          <span>{t.meetingsPage.timelineEnd}</span>
+        </div>
+      </div>
+
+      <p class="timeline__note">{t.meetingsPage.note}</p>
+    </div>
+  </section>
+
+  <section class="section meetings-cta">
+    <div class="container meetings-cta__grid">
+      <div class="meetings-cta__card" data-reveal>
+        <span class="meetings-cta__icon"><Icon name="send" /></span>
+        <h2>{t.meetingsPage.shareTitle}</h2>
+        <p>{t.meetingsPage.shareText}</p>
+        <a class="btn btn--outline" href={SITE.whatsappDirect} target="_blank" rel="noopener noreferrer">
+          <Icon name="whatsapp" />
+          {t.meetingsPage.shareCta}
+        </a>
+      </div>
+
+      <div class="meetings-cta__panel" data-reveal style="--delay: 100ms">
+        <p class="eyebrow">{t.meetingsPage.scheduleLabel}</p>
+        <h2>{t.meetingsPage.ctaTitle}</h2>
+        <p>{t.meetingsPage.ctaText}</p>
+        <div class="meetings-cta__actions">
+          <a class="btn btn--whatsapp" href={SITE.whatsappGroup} target="_blank" rel="noopener noreferrer">
+            <Icon name="whatsapp" />
+            {t.meetingsPage.ctaWhatsapp}
+          </a>
+          <a class="btn btn--light" href={`mailto:${SITE.email}`}>
+            <Icon name="mail" />
+            {t.meetingsPage.ctaJoin}
+          </a>
+        </div>
+        <a class="meetings-cta__back" href={homePath}>
+          {t.meetingsPage.backHome}
+          <Icon name="arrowRight" class="icon--arrow" />
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

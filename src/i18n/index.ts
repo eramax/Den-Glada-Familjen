@@ -13,6 +13,11 @@ export const paths: Record<Lang, string> = {
   sv: '/sv/',
 };
 
+export const meetingPaths: Record<Lang, string> = {
+  ar: '/meetings/',
+  sv: '/sv/moten/',
+};
+
 export const langNames: Record<Lang, string> = {
   ar: 'العربية',
   sv: 'Svenska',

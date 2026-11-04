@@ -1,2 +1,3 @@
 /ar / 301
+/ar/meetings /meetings/ 301
 /ar/* /:splat 301

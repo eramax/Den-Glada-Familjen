@@ -8,14 +8,24 @@ import type { Dict, Lang } from '../i18n';
 interface Props {
   lang: Lang;
   t: Dict;
+  alternatePath: string;
 }
 
-const { lang, t } = Astro.props;
+const { lang, t, alternatePath } = Astro.props;
+const homePath = lang === 'ar' ? '/' : '/sv/';
+const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '/sv/';
+const joinHref = isHome ? '#join' : `${homePath}#join`;
+const brandHref = isHome ? '#home' : homePath;
+const headerItems = t.nav.items.filter((item) => item.id !== 'join');
+const hrefFor = (item: Dict['nav']['items'][number]) =>
+  item.href ?? (isHome ? `#${item.id}` : `${homePath}#${item.id}`);
+const isCurrent = (item: Dict['nav']['items'][number]) =>
+  Boolean(item.href && Astro.url.pathname === item.href);
 ---
 
 <header class="site-header" data-header>
   <div class="container header__inner">
-    <a class="brand" href="#home">
+    <a class="brand" href={brandHref}>
       <span class="brand__mark">
         <Image src={logoMark} alt="" width={46} height={46} loading="eager" />
       </span>
@@ -27,15 +37,15 @@ const { lang, t } = Astro.props;
 
     <nav class="nav" aria-label={t.nav.menu}>
       <ul>
-        {t.nav.items.map((item) => (
-          <li><a href={`#${item.id}`}>{item.label}</a></li>
+        {headerItems.map((item) => (
+          <li><a href={hrefFor(item)} aria-current={isCurrent(item) ? 'page' : undefined}>{item.label}</a></li>
         ))}
       </ul>
     </nav>
 
     <div class="header__actions">
-      <LanguageSwitch lang={lang} t={t} />
-      <a class="btn btn--primary header__cta" href="#join">{t.nav.join}</a>
+      <LanguageSwitch lang={lang} t={t} href={alternatePath} />
+      <a class="btn btn--primary header__cta" href={joinHref}>{t.nav.join}</a>
       <button class="menu-btn" type="button" data-menu-open aria-label={t.a11y.menuLabel} aria-haspopup="dialog">
         <Icon name="menu" />
       </button>
@@ -56,12 +66,12 @@ const { lang, t } = Astro.props;
 
   <nav class="mobile-menu__nav" aria-label={t.nav.menu}>
     <ul>
-      {t.nav.items.map((item) => (
-        <li><a href={`#${item.id}`} data-menu-link>{item.label}</a></li>
+      {headerItems.map((item) => (
+        <li><a href={hrefFor(item)} aria-current={isCurrent(item) ? 'page' : undefined} data-menu-link>{item.label}</a></li>
       ))}
     </ul>
   </nav>
 
-  <a class="btn btn--primary mobile-menu__cta" href="#join" data-menu-link>{t.nav.join}</a>
-  <LanguageSwitch lang={lang} t={t} full />
+  <a class="btn btn--primary mobile-menu__cta" href={joinHref} data-menu-link>{t.nav.join}</a>
+  <LanguageSwitch lang={lang} t={t} href={alternatePath} full />
 </dialog>

@@ -10,15 +10,19 @@ interface Props {
   t: Dict;
 }
 
-const { t } = Astro.props;
+const { lang, t } = Astro.props;
 const year = new Date().getFullYear();
+const homePath = lang === 'ar' ? '/' : '/sv/';
+const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '/sv/';
+const hrefFor = (item: Dict['nav']['items'][number]) =>
+  item.href ?? (isHome ? `#${item.id}` : `${homePath}#${item.id}`);
 ---
 
 <footer class="site-footer">
   <div class="container">
     <div class="footer__grid">
       <div class="footer__brand">
-        <a class="footer__logo" href="#home" aria-label={t.brand.name}>
+        <a class="footer__logo" href={homePath} aria-label={t.brand.name}>
           <Image src={logoFull} alt={t.a11y.logoAlt} width={190} loading="eager" />
         </a>
         <p>{t.footer.about}</p>
@@ -29,7 +33,7 @@ const year = new Date().getFullYear();
         <h3>{t.footer.quickLinks}</h3>
         <ul class="footer__links">
           {t.nav.items.map((item) => (
-            <li><a href={`#${item.id}`}>{item.label}</a></li>
+            <li><a href={hrefFor(item)}>{item.label}</a></li>
           ))}
         </ul>
       </div>

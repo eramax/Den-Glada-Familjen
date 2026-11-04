@@ -3,6 +3,13 @@ export type Lang = 'ar' | 'sv';
 export interface NavItem {
   id: string;
   label: string;
+  href?: string;
+}
+
+export interface FormatCard {
+  icon: string;
+  title: string;
+  text: string;
 }
 
 export interface Stat {
@@ -174,6 +181,46 @@ export interface Dict {
       opening: string;
       subject: string;
     };
+  };
+  meetingsPage: {
+    metaTitle: string;
+    metaDescription: string;
+    eyebrow: string;
+    title: string;
+    lead: string;
+    scheduleLabel: string;
+    scheduleTime: string;
+    scheduleNote: string;
+    locationLabel: string;
+    location: string;
+    formatLabel: string;
+    formatTitle: string;
+    formatLead: string;
+    formatCards: FormatCard[];
+    timelineLabel: string;
+    timelineTitle: string;
+    timelineLead: string;
+    timelineEnd: string;
+    latestLabel: string;
+    allLabel: string;
+    detailsLabel: string;
+    summaryLabel: string;
+    adultsLabel: string;
+    childrenLabel: string;
+    lectureLabel: string;
+    takeawayLabel: string;
+    videoLabel: string;
+    photosLabel: string;
+    note: string;
+    shareTitle: string;
+    shareText: string;
+    shareCta: string;
+    ctaTitle: string;
+    ctaText: string;
+    ctaWhatsapp: string;
+    ctaJoin: string;
+    backHome: string;
+    ctaLanding: string;
   };
   footer: {
     about: string;
