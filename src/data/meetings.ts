@@ -40,7 +40,7 @@ export interface Meeting {
  * Add a new meeting at the top of the array.
  *
  * - date: ISO date (YYYY-MM-DD)
- * - tag: "هذا الأسبوع" / "الأسبوع الماضي" / "لقاء سابق"
+ * - tag: "غدًا" / "الأحد الماضي" / "اللقاء الأول"
  * - images: 2–3 صور من اللقاء (يمكن استخدام صور مؤقتة)
  * - video.url: رابط التسجيل على يوتيوب
  */
@@ -49,16 +49,82 @@ export const meetings: Meeting[] = [
     id: '2026-11-08',
     date: '2026-11-08',
     tag: {
-      ar: 'هذا الأسبوع',
-      sv: 'Denna vecka',
+      ar: 'غدًا',
+      sv: 'Imorgon',
+    },
+    topic: {
+      ar: 'اللقاء الثالث من سلسلة المحاضرات',
+      sv: 'Tredje föreläsningen i serien',
+    },
+    summary: {
+      ar: 'نلتقي غدًا الأحد 8 نوفمبر في مكاتب ABF للقاء الثالث من سلسلة المحاضرات بالتعاون مع ABF. نبدأ الساعة 16:00، مع ضيافة وأنشطة للأطفال.',
+      sv: 'Vi möts imorgon söndag 8 november i ABF-huset för den tredje föreläsningen i serien i samarbete med ABF. Vi börjar kl. 16.00 med fika och aktiviteter för barn.',
+    },
+    takeaway: {
+      ar: 'نلتقي غدًا في ABF-huset — أهلاً بكم جميعًا.',
+      sv: 'Vi ses imorgon i ABF-huset – varmt välkomna.',
+    },
+    adults: {
+      ar: 'أنشطة وحوار حول موضوع المحاضرة.',
+      sv: 'Aktiviteter och samtal kring föreläsningens tema.',
+    },
+    children: {
+      ar: 'مساحة آمنة وألعاب وأنشطة للأطفال.',
+      sv: 'Trygg plats, lekar och aktiviteter för barnen.',
+    },
+    lecture: {
+      ar: 'اللقاء الثالث من سلسلة المحاضرات بالتعاون مع ABF. يُعلن الموضوع عبر مجموعة واتساب.',
+      sv: 'Tredje föreläsningen i serien i samarbete med ABF. Temat annonseras i WhatsApp-gruppen.',
+    },
+    images: [
+      {
+        src: aboutMain,
+        alt: {
+          ar: 'عائلة تستمتع بوقتها معًا',
+          sv: 'En familj som har roligt tillsammans',
+        },
+      },
+      {
+        src: galleryKids,
+        alt: {
+          ar: 'أطفال يشاركون في نشاط فني',
+          sv: 'Barn som deltar i en konstaktivitet',
+        },
+      },
+      {
+        src: galleryCommunity,
+        alt: {
+          ar: 'عائلة تستمتع بنزهة في الحديقة',
+          sv: 'En familj som har picknick i parken',
+        },
+      },
+    ],
+    video: {
+      url: SITE.youtube,
+      label: {
+        ar: 'تُنشر التسجيلات على يوتيوب',
+        sv: 'Inspelningar publiceras på YouTube',
+      },
+      note: {
+        ar: 'سيُضاف تسجيل هذا اللقاء إلى قناة الجمعية بعد انتهائه.',
+        sv: 'Inspelningen från mötet läggs upp på föreningens kanal efteråt.',
+      },
+    },
+  },
+  {
+    id: '2026-11-01',
+    date: '2026-11-01',
+    tag: {
+      ar: 'الأحد الماضي',
+      sv: 'Förra söndagen',
     },
     topic: {
       ar: 'التواصل بين أفراد الأسرة',
       sv: 'Kommunikation i familjen',
     },
     summary: {
-      ar: 'نناقش هذا الأسبوع كيف نبني تواصلًا واضحًا ودافئًا بين أفراد الأسرة: الاستماع الفعّال، التعبير عن المشاعر، واختيار الوقت المناسب للحوار.',
-      sv: 'Denna vecka samtalar vi om hur vi bygger en tydlig och varm kommunikation i familjen: aktivt lyssnande, att uttrycka känslor och att välja rätt tid för samtal.',
+      ar: 'ناقشنا كيف نبني تواصلًا واضحًا ودافئًا بين أفراد الأسرة: الاستماع الفعّال، التعبير عن المشاعر، واختيار الوقت المناسب للحوار.',
+      sv: 'Vi samtalade om hur vi bygger en tydlig och varm kommunikation i familjen: aktivt lyssnande, att uttrycka känslor och att välja rätt tid för samtal.',
     },
     takeaway: {
       ar: 'الاستماع الجيد نصف الحوار، والباقي يبدأ بسؤال بسيط: «كيف حالك حقًا؟»',
@@ -94,37 +160,37 @@ export const meetings: Meeting[] = [
       {
         src: galleryCommunity,
         alt: {
-          ar: 'لقاء مجتمعي في الهواء الطلق',
-          sv: 'En gemensam träff utomhus',
+          ar: 'عائلة تستمتع بنزهة في الحديقة',
+          sv: 'En familj som har picknick i parken',
         },
       },
     ],
     video: {
       url: SITE.youtube,
       label: {
-        ar: 'تُنشر التسجيلات على يوتيوب',
-        sv: 'Inspelningar publiceras på YouTube',
+        ar: 'شاهد التسجيلات على يوتيوب',
+        sv: 'Se inspelningar på YouTube',
       },
       note: {
-        ar: 'سيُضاف تسجيل هذا اللقاء إلى قناة الجمعية بعد انتهائه.',
-        sv: 'Inspelningen från mötet läggs upp på föreningens kanal efteråt.',
+        ar: 'تجدون تسجيلات اللقاءات على قناة الجمعية.',
+        sv: 'Du hittar inspelningar från mötena på föreningens kanal.',
       },
     },
   },
   {
-    id: '2026-11-01',
-    date: '2026-11-01',
+    id: '2026-10-25',
+    date: '2026-10-25',
     tag: {
-      ar: 'الأسبوع الماضي',
-      sv: 'Förra veckan',
+      ar: 'اللقاء الأول',
+      sv: 'Första mötet',
     },
     topic: {
       ar: 'حل النزاع بين أفراد الأسرة',
       sv: 'Konflikthantering i familjen',
     },
     summary: {
-      ar: 'تعلّمنا كيف نتعامل مع الخلافات الأسرية بهدوء: الاستماع لكل طرف، التعبير عن المشاعر دون اتهام، والبحث عن حلول تحفظ العلاقة.',
-      sv: 'Vi lärde oss att möta familjekonflikter med lugn: lyssna på alla parter, uttrycka känslor utan anklagelser och hitta lösningar som bevarar relationen.',
+      ar: 'أول لقاء تعارف وتقديم الجمعية، تضمّن محاضرة عن حل النزاع بين أفراد الأسرة: الاستماع لكل طرف، التعبير عن المشاعر دون اتهام، والبحث عن حلول تحفظ العلاقة.',
+      sv: 'Första mötet där vi presenterade föreningen och hade en föreläsning om konflikthantering i familjen: lyssna på alla parter, uttrycka känslor utan anklagelser och hitta lösningar som bevarar relationen.',
     },
     takeaway: {
       ar: 'الخلاف ليس نهاية العلاقة؛ بل فرصة لفهم أفضل واتفاق أوضح.',
@@ -162,72 +228,6 @@ export const meetings: Meeting[] = [
         alt: {
           ar: 'عائلة تتناول الطعام معًا',
           sv: 'En familj som äter tillsammans',
-        },
-      },
-    ],
-    video: {
-      url: SITE.youtube,
-      label: {
-        ar: 'شاهد التسجيلات على يوتيوب',
-        sv: 'Se inspelningar på YouTube',
-      },
-      note: {
-        ar: 'تجدون تسجيلات اللقاءات على قناة الجمعية.',
-        sv: 'Du hittar inspelningar från mötena på föreningens kanal.',
-      },
-    },
-  },
-  {
-    id: '2026-10-25',
-    date: '2026-10-25',
-    tag: {
-      ar: 'اللقاء الأول',
-      sv: 'Första mötet',
-    },
-    topic: {
-      ar: 'لقاء تعارف وتقديم الجمعية',
-      sv: 'Introduktionsmöte',
-    },
-    summary: {
-      ar: 'أول لقاء تعارف بين الأعضاء في مكاتب ABF، تعرّفنا فيه على الجمعية وأهدافها وأنشطتها، وبدأنا بناء مجتمع دافئ للعائلات.',
-      sv: 'Första mötet i ABF-huset där vi lärde känna varandra och presenterade föreningen, dess mål och aktiviteter.',
-    },
-    takeaway: {
-      ar: 'كل رحلة تبدأ بلقاء، وكل لقاء يبدأ بألفة.',
-      sv: 'Varje resa börjar med ett möte – och varje möte börjar med gemenskap.',
-    },
-    adults: {
-      ar: 'تعارف وحوار حول أهداف الجمعية وأنشطتها.',
-      sv: 'Mingel och samtal om föreningens mål och aktiviteter.',
-    },
-    children: {
-      ar: 'ألعاب تعارف ومساحة آمنة للأطفال.',
-      sv: 'Lära-känna-lekar och en trygg plats för barnen.',
-    },
-    lecture: {
-      ar: 'تعريف بالجمعية ورسالتها.',
-      sv: 'Presentation av föreningen och dess vision.',
-    },
-    images: [
-      {
-        src: galleryCommunity,
-        alt: {
-          ar: 'لقاء تعارف بين أعضاء الجمعية',
-          sv: 'Ett introduktionsmöte med föreningens medlemmar',
-        },
-      },
-      {
-        src: galleryKids,
-        alt: {
-          ar: 'أطفال يشاركون في نشاط فني',
-          sv: 'Barn som deltar i en konstaktivitet',
-        },
-      },
-      {
-        src: meetingDialogue,
-        alt: {
-          ar: 'عائلة تتحدث وتضحك معًا في المنزل',
-          sv: 'En familj som pratar och skrattar tillsammans hemma',
         },
       },
     ],

@@ -7,7 +7,7 @@ import sitemap from '@astrojs/sitemap';
 const SITE =
   process.env.SITE_URL ||
   process.env.CF_PAGES_URL ||
-  'https://dgf-vaesteras.pages.dev';
+  'https://den-glada-familjen.pages.dev';
 
 export default defineConfig({
   site: SITE,
