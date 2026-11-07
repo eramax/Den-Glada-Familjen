@@ -2693,7 +2693,7 @@ html[lang='ar'] .meetings-hero__card-time {
   content: '';
   position: absolute;
   inset-block: 1.5rem 3rem;
-  inset-inline-start: 1.45rem;
+  inset-inline-start: calc(0.65rem + 0.5rem - 1px);
   width: 2px;
   border-radius: 2px;
   background: linear-gradient(180deg, var(--green), var(--amber), transparent);
