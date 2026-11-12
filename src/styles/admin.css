@@ -434,6 +434,39 @@ img {
   color: var(--white);
 }
 
+.app__subtabs {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  padding: 0.15rem 0 0.55rem;
+}
+
+.app__subtab {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    background 0.2s var(--ease),
+    color 0.2s var(--ease),
+    border-color 0.2s var(--ease);
+}
+
+.app__subtab:hover {
+  border-color: var(--blue);
+  color: var(--navy);
+}
+
+.app__subtab.is-active {
+  background: var(--blue-soft);
+  border-color: rgba(18, 116, 188, 0.25);
+  color: var(--navy);
+}
+
 .app__note {
   margin: 0.35rem 0 1.2rem;
   color: var(--ink-3);

@@ -27,7 +27,8 @@ import {
 } from './ui';
 
 type PageTab = 'home' | 'meetingsPage' | 'site';
-type Tab = PageTab | 'meetings' | 'images' | 'settings';
+type Section = PageTab | 'meetings' | 'images' | 'settings';
+type MainTab = 'content' | 'general';
 
 interface PageDefinition {
   path: string;
@@ -53,20 +54,36 @@ const PAGES: Record<PageTab, PageDefinition> = {
   },
   site: {
     path: 'src/content/pages/site.md',
-    title: 'الهوية والتنقل',
+    title: 'الهيدر والفوتر',
     description:
       'اسم الجمعية، القائمة، نصوص إمكانية الوصول، والفوتر.',
     preview: '/',
   },
 };
 
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'home', label: 'الرئيسية' },
-  { id: 'meetings', label: 'اللقاءات' },
-  { id: 'meetingsPage', label: 'صفحة اللقاءات' },
-  { id: 'site', label: 'الهوية والتنقل' },
-  { id: 'settings', label: 'بيانات التواصل' },
-  { id: 'images', label: 'الصور' },
+const MAIN_TABS: Array<{
+  id: MainTab;
+  label: string;
+  sections: Array<{ id: Section; label: string }>;
+}> = [
+  {
+    id: 'content',
+    label: 'المحتوى',
+    sections: [
+      { id: 'home', label: 'الصفحة الرئيسية' },
+      { id: 'meetingsPage', label: 'صفحة اللقاءات' },
+      { id: 'meetings', label: 'اللقاءات' },
+    ],
+  },
+  {
+    id: 'general',
+    label: 'عام',
+    sections: [
+      { id: 'images', label: 'الصور والشعار' },
+      { id: 'site', label: 'الهيدر والفوتر' },
+      { id: 'settings', label: 'بيانات التواصل' },
+    ],
+  },
 ];
 
 function must<T extends Element>(selector: string): T {
@@ -95,12 +112,14 @@ const unlockSubmit = must<HTMLButtonElement>('#unlock-submit');
 const unlockForgot = must<HTMLButtonElement>('#unlock-forgot');
 const appMain = must<HTMLElement>('#app-main');
 const appTabs = must<HTMLElement>('#app-tabs');
+const appSubTabs = must<HTMLElement>('#app-subtabs');
 const userName = must<HTMLElement>('#user-name');
 const appRepo = must<HTMLElement>('#app-repo');
 const logoutButton = must<HTMLButtonElement>('#logout-button');
 
 let stored: StoredCredentials | null = null;
-let activeTab: Tab = 'home';
+let activeMain: MainTab = 'content';
+let activeSection: Section = 'home';
 let dirty = false;
 let renderToken = 0;
 
@@ -108,11 +127,16 @@ function setDirty(value: boolean): void {
   dirty = value;
 }
 
-function showSetup(message?: string): void {
+function resetNavigation(): void {
   setDirty(false);
-  activeTab = 'home';
+  activeMain = 'content';
+  activeSection = 'home';
   renderToken += 1;
   appMain.replaceChildren();
+}
+
+function showSetup(message?: string): void {
+  resetNavigation();
   appView.hidden = true;
   unlockView.hidden = true;
   setupView.hidden = false;
@@ -130,10 +154,7 @@ function showSetup(message?: string): void {
 }
 
 function showUnlock(message?: string): void {
-  setDirty(false);
-  activeTab = 'home';
-  renderToken += 1;
-  appMain.replaceChildren();
+  resetNavigation();
   setupView.hidden = true;
   appView.hidden = true;
   unlockView.hidden = false;
@@ -154,8 +175,12 @@ function showApp(): void {
   appRepo.textContent = stored
     ? `${stored.repo} · ${stored.branch}`
     : '';
-  renderTabs();
-  void activate('home');
+
+  renderMainTabs();
+  renderSubTabs();
+  updateMainTabs();
+  updateSubTabs();
+  void renderSection();
 }
 
 function handleAuthError(
@@ -181,48 +206,98 @@ async function guard<T>(operation: () => Promise<T>): Promise<T | null> {
   }
 }
 
-function renderTabs(): void {
+async function confirmDiscard(): Promise<boolean> {
+  if (!dirty) return true;
+  const discard = await confirmDialog(
+    'تغييرات غير محفوظة',
+    'هل تريد تجاهل التغييرات والانتقال؟',
+    'تجاهل',
+    true,
+  );
+  if (!discard) return false;
+  setDirty(false);
+  return true;
+}
+
+function renderMainTabs(): void {
   appTabs.replaceChildren();
-  for (const tab of TABS) {
+  for (const main of MAIN_TABS) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'app__tab';
-    button.dataset.tab = tab.id;
-    button.textContent = tab.label;
+    button.dataset.main = main.id;
+    button.textContent = main.label;
     button.addEventListener('click', () => {
-      void activate(tab.id);
+      void switchMain(main.id);
     });
     appTabs.append(button);
   }
 }
 
-function updateTabs(): void {
+function renderSubTabs(): void {
+  const main = MAIN_TABS.find((item) => item.id === activeMain);
+  if (!main) return;
+
+  appSubTabs.replaceChildren();
+  for (const section of main.sections) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'app__subtab';
+    button.dataset.section = section.id;
+    button.textContent = section.label;
+    button.addEventListener('click', () => {
+      void activateSection(section.id);
+    });
+    appSubTabs.append(button);
+  }
+}
+
+function updateMainTabs(): void {
   appTabs.querySelectorAll<HTMLButtonElement>('.app__tab').forEach((button) => {
-    const isActive = button.dataset.tab === activeTab;
+    const isActive = button.dataset.main === activeMain;
     button.classList.toggle('is-active', isActive);
     button.setAttribute('aria-current', isActive ? 'page' : 'false');
   });
 }
 
-async function activate(tab: Tab): Promise<void> {
-  if (tab === activeTab && appMain.childElementCount > 0) return;
+function updateSubTabs(): void {
+  appSubTabs
+    .querySelectorAll<HTMLButtonElement>('.app__subtab')
+    .forEach((button) => {
+      const isActive = button.dataset.section === activeSection;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-current', isActive ? 'page' : 'false');
+    });
+}
 
-  if (dirty) {
-    const discard = await confirmDialog(
-      'تغييرات غير محفوظة',
-      'هل تريد تجاهل التغييرات والانتقال؟',
-      'تجاهل',
-      true,
-    );
-    if (!discard) return;
-    setDirty(false);
-  }
+async function switchMain(mainId: MainTab): Promise<void> {
+  if (mainId === activeMain && appMain.childElementCount > 0) return;
+  if (!(await confirmDiscard())) return;
 
-  activeTab = tab;
-  updateTabs();
+  const main = MAIN_TABS.find((item) => item.id === mainId);
+  if (!main) return;
+
+  activeMain = mainId;
+  activeSection = main.sections[0].id;
+  updateMainTabs();
+  renderSubTabs();
+  updateSubTabs();
+  await renderSection();
+}
+
+async function activateSection(section: Section): Promise<void> {
+  if (section === activeSection && appMain.childElementCount > 0) return;
+  if (!(await confirmDiscard())) return;
+
+  activeSection = section;
+  updateSubTabs();
+  await renderSection();
+}
+
+async function renderSection(): Promise<void> {
   appMain.replaceChildren();
 
-  if (tab === 'meetings') {
+  if (activeSection === 'meetings') {
     const panel = document.createElement('div');
     appMain.append(panel);
     const view = createMeetingsView({
@@ -235,7 +310,7 @@ async function activate(tab: Tab): Promise<void> {
     return;
   }
 
-  if (tab === 'images') {
+  if (activeSection === 'images') {
     const panel = document.createElement('div');
     appMain.append(panel);
     const view = createImagesView({
@@ -246,7 +321,7 @@ async function activate(tab: Tab): Promise<void> {
     return;
   }
 
-  if (tab === 'settings') {
+  if (activeSection === 'settings') {
     const panel = document.createElement('div');
     appMain.append(panel);
     const view = createSettingsView({
@@ -258,7 +333,7 @@ async function activate(tab: Tab): Promise<void> {
     return;
   }
 
-  await renderPage(tab);
+  await renderPage(activeSection);
 }
 
 async function renderPage(tab: PageTab): Promise<void> {
