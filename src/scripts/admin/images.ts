@@ -78,6 +78,18 @@ const SLOTS: ImageSlot[] = [
     description: 'النسخة المختصرة من الشعار.',
     type: 'logo',
   },
+  {
+    path: 'public/og-image-ar.jpg',
+    label: 'صورة المشاركة — عربي',
+    description: 'تظهر عند مشاركة الموقع على وسائل التواصل (Open Graph).',
+    type: 'photo',
+  },
+  {
+    path: 'public/og-image-sv.jpg',
+    label: 'صورة المشاركة — سويدي',
+    description: 'تظهر عند مشاركة النسخة السويدية على وسائل التواصل.',
+    type: 'photo',
+  },
 ];
 
 export interface ImagesViewOptions {

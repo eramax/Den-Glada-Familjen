@@ -1,8 +1,23 @@
-import { ApiError, api } from './api';
+import {
+  ApiError,
+  api,
+  clearApi,
+  configureApi,
+  validateConnection,
+} from './api';
+import {
+  clearCredentials,
+  createCredentials,
+  loadCredentials,
+  saveCredentials,
+  unlockToken,
+} from './credentials';
+import type { StoredCredentials } from './credentials';
 import { renderPageForm } from './form';
 import { createImagesView } from './images';
 import { parseMarkdown, serializeMarkdown } from './markdown';
 import { createMeetingsView } from './meetings';
+import { createSettingsView } from './settings';
 import type { PageData } from './types';
 import {
   confirmDialog,
@@ -12,7 +27,7 @@ import {
 } from './ui';
 
 type PageTab = 'home' | 'meetingsPage' | 'site';
-type Tab = PageTab | 'meetings' | 'images';
+type Tab = PageTab | 'meetings' | 'images' | 'settings';
 
 interface PageDefinition {
   path: string;
@@ -50,6 +65,7 @@ const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'meetings', label: 'اللقاءات' },
   { id: 'meetingsPage', label: 'صفحة اللقاءات' },
   { id: 'site', label: 'الهوية والتنقل' },
+  { id: 'settings', label: 'بيانات التواصل' },
   { id: 'images', label: 'الصور' },
 ];
 
@@ -59,18 +75,31 @@ function must<T extends Element>(selector: string): T {
   return element;
 }
 
-const loginView = must<HTMLElement>('#login-view');
+const setupView = must<HTMLElement>('#setup-view');
+const unlockView = must<HTMLElement>('#unlock-view');
 const appView = must<HTMLElement>('#app-view');
-const loginForm = must<HTMLFormElement>('#login-form');
-const loginUsername = must<HTMLInputElement>('#login-username');
-const loginPassword = must<HTMLInputElement>('#login-password');
-const loginError = must<HTMLElement>('#login-error');
-const loginSubmit = must<HTMLButtonElement>('#login-submit');
+const setupForm = must<HTMLFormElement>('#setup-form');
+const setupUsername = must<HTMLInputElement>('#setup-username');
+const setupRepo = must<HTMLInputElement>('#setup-repo');
+const setupBranch = must<HTMLInputElement>('#setup-branch');
+const setupToken = must<HTMLInputElement>('#setup-token');
+const setupPassphrase = must<HTMLInputElement>('#setup-passphrase');
+const setupPassphrase2 = must<HTMLInputElement>('#setup-passphrase2');
+const setupError = must<HTMLElement>('#setup-error');
+const setupSubmit = must<HTMLButtonElement>('#setup-submit');
+const unlockForm = must<HTMLFormElement>('#unlock-form');
+const unlockUser = must<HTMLElement>('#unlock-user');
+const unlockPassphrase = must<HTMLInputElement>('#unlock-passphrase');
+const unlockError = must<HTMLElement>('#unlock-error');
+const unlockSubmit = must<HTMLButtonElement>('#unlock-submit');
+const unlockForgot = must<HTMLButtonElement>('#unlock-forgot');
 const appMain = must<HTMLElement>('#app-main');
 const appTabs = must<HTMLElement>('#app-tabs');
 const userName = must<HTMLElement>('#user-name');
+const appRepo = must<HTMLElement>('#app-repo');
 const logoutButton = must<HTMLButtonElement>('#logout-button');
 
+let stored: StoredCredentials | null = null;
 let activeTab: Tab = 'home';
 let dirty = false;
 let renderToken = 0;
@@ -79,26 +108,61 @@ function setDirty(value: boolean): void {
   dirty = value;
 }
 
-function showLogin(message?: string): void {
+function showSetup(message?: string): void {
   setDirty(false);
   activeTab = 'home';
   renderToken += 1;
   appMain.replaceChildren();
   appView.hidden = true;
-  loginView.hidden = false;
-  loginError.textContent = message ?? '';
-  loginError.hidden = !message;
-  loginPassword.value = '';
-  loginUsername.focus();
+  unlockView.hidden = true;
+  setupView.hidden = false;
+
+  setupUsername.value = stored?.username ?? 'admin';
+  setupRepo.value = stored?.repo ?? 'eramax/Den-Glada-Familjen';
+  setupBranch.value = stored?.branch ?? 'main';
+  setupToken.value = '';
+  setupPassphrase.value = '';
+  setupPassphrase2.value = '';
+
+  setupError.textContent = message ?? '';
+  setupError.hidden = !message;
+  setupUsername.focus();
 }
 
-function showApp(user: string): void {
+function showUnlock(message?: string): void {
   setDirty(false);
-  loginView.hidden = true;
+  activeTab = 'home';
+  renderToken += 1;
+  appMain.replaceChildren();
+  setupView.hidden = true;
+  appView.hidden = true;
+  unlockView.hidden = false;
+
+  unlockUser.textContent = stored?.username ?? 'admin';
+  unlockError.textContent = message ?? '';
+  unlockError.hidden = !message;
+  unlockPassphrase.value = '';
+  unlockPassphrase.focus();
+}
+
+function showApp(): void {
+  setDirty(false);
+  setupView.hidden = true;
+  unlockView.hidden = true;
   appView.hidden = false;
-  userName.textContent = user;
+  userName.textContent = stored?.username ?? 'admin';
+  appRepo.textContent = stored
+    ? `${stored.repo} · ${stored.branch}`
+    : '';
   renderTabs();
   void activate('home');
+}
+
+function handleAuthError(
+  message = 'التوكن غير صالح أو منتهي. أعد المحاولة أو أعد الإعداد.',
+): void {
+  clearApi();
+  showUnlock(message);
 }
 
 async function guard<T>(operation: () => Promise<T>): Promise<T | null> {
@@ -106,7 +170,7 @@ async function guard<T>(operation: () => Promise<T>): Promise<T | null> {
     return await operation();
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
-      showLogin('انتهت الجلسة. سجّل الدخول من جديد.');
+      handleAuthError();
       return null;
     }
     toast(
@@ -165,7 +229,7 @@ async function activate(tab: Tab): Promise<void> {
       container: panel,
       setDirty,
       confirm: confirmDialog,
-      onAuthError: () => showLogin('انتهت الجلسة. سجّل الدخول من جديد.'),
+      onAuthError: () => handleAuthError(),
     });
     await view.load();
     return;
@@ -176,7 +240,19 @@ async function activate(tab: Tab): Promise<void> {
     appMain.append(panel);
     const view = createImagesView({
       container: panel,
-      onAuthError: () => showLogin('انتهت الجلسة. سجّل الدخول من جديد.'),
+      onAuthError: () => handleAuthError(),
+    });
+    await view.load();
+    return;
+  }
+
+  if (tab === 'settings') {
+    const panel = document.createElement('div');
+    appMain.append(panel);
+    const view = createSettingsView({
+      container: panel,
+      setDirty,
+      onAuthError: () => handleAuthError(),
     });
     await view.load();
     return;
@@ -274,7 +350,7 @@ async function renderPage(tab: PageTab): Promise<void> {
       });
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        showLogin('انتهت الجلسة. سجّل الدخول من جديد.');
+        handleAuthError();
         return;
       }
       toast(
@@ -290,40 +366,123 @@ async function renderPage(tab: PageTab): Promise<void> {
   appMain.append(head, formContainer, bar);
 }
 
-loginForm.addEventListener('submit', async (event) => {
+setupForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  const username = loginUsername.value.trim();
-  const password = loginPassword.value;
+  const username = setupUsername.value.trim() || 'admin';
+  const repo = setupRepo.value.trim();
+  const branch = setupBranch.value.trim() || 'main';
+  const token = setupToken.value.trim();
+  const passphrase = setupPassphrase.value;
+  const confirmation = setupPassphrase2.value;
 
-  if (!username || !password) {
-    loginError.textContent = 'أدخل اسم المستخدم وكلمة السر.';
-    loginError.hidden = false;
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) {
+    setupError.textContent = 'صيغة المستودع يجب أن تكون owner/repo.';
+    setupError.hidden = false;
+    return;
+  }
+  if (!token) {
+    setupError.textContent = 'أدخل GitHub Token.';
+    setupError.hidden = false;
+    return;
+  }
+  if (passphrase.length < 10) {
+    setupError.textContent = 'عبارة المرور يجب أن تكون 10 أحرف على الأقل.';
+    setupError.hidden = false;
+    return;
+  }
+  if (passphrase !== confirmation) {
+    setupError.textContent = 'عبارتا المرور غير متطابقتين.';
+    setupError.hidden = false;
     return;
   }
 
-  loginError.hidden = true;
-  setBusy(loginSubmit, true, 'جارٍ الدخول...');
+  setupError.hidden = true;
+  setBusy(setupSubmit, true, 'جارٍ اختبار الاتصال...');
 
   try {
-    const result = await api.login(username, password);
-    loginPassword.value = '';
-    showApp(result.user);
+    configureApi({ token, repo, branch });
+    await validateConnection();
+
+    const credentials = await createCredentials({
+      username,
+      repo,
+      branch,
+      token,
+      passphrase,
+    });
+    saveCredentials(credentials);
+    stored = credentials;
+
+    setupToken.value = '';
+    setupPassphrase.value = '';
+    setupPassphrase2.value = '';
+    showApp();
   } catch (error) {
-    loginError.textContent =
-      error instanceof Error ? error.message : 'تعذّر تسجيل الدخول.';
-    loginError.hidden = false;
-    loginPassword.select();
+    clearApi();
+    setupError.textContent =
+      error instanceof Error ? error.message : 'تعذّر الاتصال بـ GitHub.';
+    setupError.hidden = false;
   } finally {
-    setBusy(loginSubmit, false);
+    setBusy(setupSubmit, false);
   }
+});
+
+unlockForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  if (!stored) {
+    showSetup();
+    return;
+  }
+
+  const passphrase = unlockPassphrase.value;
+  if (!passphrase) {
+    unlockError.textContent = 'أدخل عبارة المرور.';
+    unlockError.hidden = false;
+    return;
+  }
+
+  unlockError.hidden = true;
+  setBusy(unlockSubmit, true, 'جارٍ الفتح...');
+
+  try {
+    const token = await unlockToken(stored, passphrase);
+    configureApi({ token, repo: stored.repo, branch: stored.branch });
+    await validateConnection();
+    unlockPassphrase.value = '';
+    showApp();
+  } catch (error) {
+    clearApi();
+    unlockError.textContent =
+      error instanceof Error ? error.message : 'تعذّر فتح اللوحة.';
+    unlockError.hidden = false;
+    unlockPassphrase.select();
+  } finally {
+    setBusy(unlockSubmit, false);
+  }
+});
+
+unlockForgot.addEventListener('click', async () => {
+  const confirmed = await confirmDialog(
+    'إعادة الإعداد',
+    'سيتم حذف التوكن المشفّر وعبارة المرور من هذا المتصفح. ستحتاج إلى إدخال التوكن من جديد.',
+    'حذف الإعداد',
+    true,
+  );
+  if (!confirmed) return;
+
+  clearApi();
+  clearCredentials();
+  stored = null;
+  showSetup();
 });
 
 logoutButton.addEventListener('click', async () => {
   if (dirty) {
     const discard = await confirmDialog(
       'تغييرات غير محفوظة',
-      'هل تريد تجاهل التغييرات وتسجيل الخروج؟',
+      'هل تريد تجاهل التغييرات وقفل اللوحة؟',
       'تجاهل',
       true,
     );
@@ -331,8 +490,9 @@ logoutButton.addEventListener('click', async () => {
   }
 
   setDirty(false);
-  await guard(() => api.logout());
-  showLogin();
+  clearApi();
+  if (stored) showUnlock();
+  else showSetup();
 });
 
 window.addEventListener('beforeunload', (event) => {
@@ -340,17 +500,6 @@ window.addEventListener('beforeunload', (event) => {
   event.preventDefault();
 });
 
-async function boot(): Promise<void> {
-  try {
-    const session = await api.session();
-    if (session.authenticated && session.user) {
-      showApp(session.user);
-      return;
-    }
-  } catch {
-    // Show the login form when the session endpoint is unavailable.
-  }
-  showLogin();
-}
-
-void boot();
+stored = loadCredentials();
+if (stored) showUnlock();
+else showSetup();

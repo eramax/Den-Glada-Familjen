@@ -4,7 +4,114 @@ import logoFull from '../../assets/images/logo-full.png';
 ---
 
 <AdminLayout title="لوحة التحكم">
-  <div id="login-view" class="login">
+  <div id="setup-view" class="login" hidden>
+    <div class="login__card login__card--wide">
+      <img
+        class="login__logo"
+        src={logoFull.src}
+        width={logoFull.width}
+        height={logoFull.height}
+        alt="جمعية الأسرة السعيدة"
+      />
+      <h1 class="login__title">إعداد لوحة التحكم</h1>
+      <p class="login__lead">
+        أدخل GitHub Token وعبارة مرور محلية. التوكن يُشفَّر داخل متصفحك ولا
+        يُرسل إلى أي خادم.
+      </p>
+
+      <form id="setup-form" class="login__form">
+        <label class="field">
+          <span class="field__label">اسم العرض</span>
+          <input
+            id="setup-username"
+            class="field__input"
+            type="text"
+            value="admin"
+            autocomplete="username"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">المستودع (owner/repo)</span>
+          <input
+            id="setup-repo"
+            class="field__input"
+            type="text"
+            value="eramax/Den-Glada-Familjen"
+            dir="ltr"
+            autocomplete="off"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">الفرع</span>
+          <input
+            id="setup-branch"
+            class="field__input"
+            type="text"
+            value="main"
+            dir="ltr"
+            autocomplete="off"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">GitHub Token</span>
+          <input
+            id="setup-token"
+            class="field__input"
+            type="password"
+            dir="ltr"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">عبارة المرور المحلية</span>
+          <input
+            id="setup-passphrase"
+            class="field__input"
+            type="password"
+            autocomplete="new-password"
+            minlength="10"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">تأكيد عبارة المرور</span>
+          <input
+            id="setup-passphrase2"
+            class="field__input"
+            type="password"
+            autocomplete="new-password"
+            minlength="10"
+            required
+          />
+        </label>
+
+        <p id="setup-error" class="login__error" role="alert" hidden></p>
+
+        <button id="setup-submit" class="btn btn--primary btn--block" type="submit">
+          اختبار الاتصال وحفظ الإعداد
+        </button>
+      </form>
+
+      <p class="login__note">
+        استخدم Fine-grained PAT بصلاحية «Contents: Read and write» على هذا
+        المستودع فقط. عبارة المرور ليست التوكن؛ هي مفتاح محلي لفك تشفيره.
+      </p>
+
+      <a class="login__back" href="/">العودة إلى الموقع</a>
+    </div>
+  </div>
+
+  <div id="unlock-view" class="login" hidden>
     <div class="login__card">
       <img
         class="login__logo"
@@ -15,41 +122,32 @@ import logoFull from '../../assets/images/logo-full.png';
       />
       <h1 class="login__title">لوحة التحكم</h1>
       <p class="login__lead">
-        سجّل الدخول لإدارة نصوص الموقع والصور واللقاءات الأسبوعية.
+        مرحبًا، <strong id="unlock-user"></strong>. أدخل عبارة المرور لفتح
+        التوكن المشفّر.
       </p>
 
-      <form id="login-form" class="login__form">
+      <form id="unlock-form" class="login__form">
         <label class="field">
-          <span class="field__label">اسم المستخدم</span>
+          <span class="field__label">عبارة المرور</span>
           <input
-            id="login-username"
+            id="unlock-passphrase"
             class="field__input"
-            name="username"
-            type="text"
-            autocomplete="username"
-            required
-          />
-        </label>
-
-        <label class="field">
-          <span class="field__label">كلمة السر</span>
-          <input
-            id="login-password"
-            class="field__input"
-            name="password"
             type="password"
             autocomplete="current-password"
             required
           />
         </label>
 
-        <p id="login-error" class="login__error" role="alert" hidden></p>
+        <p id="unlock-error" class="login__error" role="alert" hidden></p>
 
-        <button id="login-submit" class="btn btn--primary btn--block" type="submit">
-          دخول
+        <button id="unlock-submit" class="btn btn--primary btn--block" type="submit">
+          فتح
         </button>
       </form>
 
+      <button id="unlock-forgot" class="link-button" type="button">
+        نسيت عبارة المرور؟
+      </button>
       <a class="login__back" href="/">العودة إلى الموقع</a>
     </div>
   </div>
@@ -72,6 +170,7 @@ import logoFull from '../../assets/images/logo-full.png';
 
       <div class="app__actions">
         <span class="app__user">مرحبًا، <strong id="user-name"></strong></span>
+        <span class="app__repo" id="app-repo"></span>
         <a
           class="btn btn--ghost btn--small"
           href="/"
@@ -81,7 +180,7 @@ import logoFull from '../../assets/images/logo-full.png';
           عرض الموقع
         </a>
         <button id="logout-button" class="btn btn--ghost btn--small" type="button">
-          خروج
+          قفل
         </button>
       </div>
     </header>
@@ -89,8 +188,8 @@ import logoFull from '../../assets/images/logo-full.png';
     <nav id="app-tabs" class="app__tabs" aria-label="أقسام لوحة التحكم"></nav>
 
     <p class="app__note">
-      كل عملية حفظ تُنشئ commit في GitHub وتعيد بناء الموقع تلقائيًا. يظهر
-      التعديل عادة خلال 1–2 دقيقة.
+      كل عملية حفظ تُنشئ commit في GitHub مباشرةً. يظهر التعديل بعد إعادة بناء
+      Cloudflare Pages عادة خلال 1–2 دقيقة.
     </p>
 
     <main id="app-main" class="app__main"></main>

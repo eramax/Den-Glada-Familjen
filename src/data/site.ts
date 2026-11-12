@@ -1,14 +1,8 @@
-export const SITE = {
-  email: 'Dengladafamiljen.association@gmail.com',
-  phone: '+46762213903',
-  phoneDisplay: '+46 76 221 39 03',
-  whatsappGroup: 'https://chat.whatsapp.com/JxYnjlbAfE8492PZBLm2nS',
-  whatsappDirect: 'https://wa.me/46762213903',
-  youtube: 'https://www.youtube.com/@dengladafamiljen7954',
-  tiktok: 'https://www.tiktok.com/@dgf.sweden',
-  orgNumber: '802527-6026',
-  founded: '2019',
-  city: 'Västerås',
-  mapsUrl: 'https://www.google.com/maps/search/?api=1&query=ABF-huset%2C+Pilgatan+2%2C+V%C3%A4ster%C3%A5s',
-  osmCopyright: 'https://www.openstreetmap.org/copyright',
-} as const;
+import settings from '../content/settings.json';
+
+/**
+ * بيانات التواصل والروابط.
+ * تُحرَّر من تبويب «بيانات التواصل» في لوحة التحكم، وتُحفظ في
+ * src/content/settings.json داخل المستودع.
+ */
+export const SITE = settings;

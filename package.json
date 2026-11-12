@@ -11,10 +11,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check",
-    "admin:hash": "node scripts/hash-password.mjs",
-    "dev:cf": "npm run build && wrangler pages dev dist",
-    "preview:cf": "wrangler pages dev dist"
+    "check": "astro check"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.4",
@@ -27,7 +24,6 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.12",
-    "typescript": "5.9.3",
-    "wrangler": "^4.161.0"
+    "typescript": "5.9.3"
   }
 }

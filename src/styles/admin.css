@@ -110,6 +110,10 @@ img {
   backdrop-filter: blur(10px);
 }
 
+.login__card--wide {
+  width: min(580px, 100%);
+}
+
 .login__logo {
   width: min(210px, 70%);
   height: auto;
@@ -154,6 +158,33 @@ img {
   color: #8d3c30;
   font-size: 0.84rem;
   font-weight: 700;
+}
+
+.login__note {
+  margin: 1rem 0 0;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--amber-deep);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-align: start;
+}
+
+.link-button {
+  display: inline-block;
+  margin-top: 0.9rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--blue);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  color: var(--navy);
 }
 
 .login__back {
@@ -356,6 +387,16 @@ img {
 
 .app__user strong {
   color: var(--ink);
+}
+
+.app__repo {
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-3);
+  font-size: 0.68rem;
+  direction: ltr;
 }
 
 .app__tabs {
@@ -1240,7 +1281,8 @@ img {
     justify-content: space-between;
   }
 
-  .app__user {
+  .app__user,
+  .app__repo {
     display: none;
   }
 
