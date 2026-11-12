@@ -5,31 +5,124 @@ import type { ToastOptions } from './ui';
 const PATH = 'src/content/settings.json';
 
 type Settings = Record<string, string>;
+type GroupId = 'contact' | 'social' | 'location' | 'org';
 
 interface FieldDefinition {
   key: string;
   label: string;
   type?: 'text' | 'email' | 'tel' | 'url';
   ltr?: boolean;
+  group: GroupId;
 }
 
+const GROUPS: Array<{
+  id: GroupId;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: 'contact',
+    label: 'التواصل المباشر',
+    description: 'البريد الإلكتروني والهاتف المستخدمان في الموقع والفوتر.',
+  },
+  {
+    id: 'social',
+    label: 'روابط التواصل الاجتماعي',
+    description:
+      'يوتيوب، تيك توك، واتساب. هذه الروابط تُستخدم في الفوتر وأزرار الموقع.',
+  },
+  {
+    id: 'location',
+    label: 'الموقع والخريطة',
+    description: 'رابط خرائط Google وحقوق OpenStreetMap.',
+  },
+  {
+    id: 'org',
+    label: 'بيانات الجمعية',
+    description: 'رقم التسجيل، سنة التأسيس، والمدينة.',
+  },
+];
+
 const FIELDS: FieldDefinition[] = [
-  { key: 'email', label: 'البريد الإلكتروني', type: 'email', ltr: true },
-  { key: 'phone', label: 'رقم الهاتف الدولي', type: 'tel', ltr: true },
-  { key: 'phoneDisplay', label: 'رقم الهاتف للعرض', type: 'tel', ltr: true },
-  { key: 'whatsappGroup', label: 'رابط مجموعة واتساب', type: 'url', ltr: true },
-  { key: 'whatsappDirect', label: 'رابط واتساب مباشر', type: 'url', ltr: true },
-  { key: 'youtube', label: 'رابط قناة يوتيوب', type: 'url', ltr: true },
-  { key: 'tiktok', label: 'رابط حساب تيك توك', type: 'url', ltr: true },
-  { key: 'orgNumber', label: 'رقم تسجيل الجمعية', ltr: true },
-  { key: 'founded', label: 'سنة التأسيس', ltr: true },
-  { key: 'city', label: 'المدينة' },
-  { key: 'mapsUrl', label: 'رابط خرائط Google', type: 'url', ltr: true },
+  {
+    key: 'email',
+    label: 'البريد الإلكتروني',
+    type: 'email',
+    ltr: true,
+    group: 'contact',
+  },
+  {
+    key: 'phone',
+    label: 'رقم الهاتف الدولي',
+    type: 'tel',
+    ltr: true,
+    group: 'contact',
+  },
+  {
+    key: 'phoneDisplay',
+    label: 'رقم الهاتف للعرض',
+    type: 'tel',
+    ltr: true,
+    group: 'contact',
+  },
+  {
+    key: 'youtube',
+    label: 'رابط قناة يوتيوب',
+    type: 'url',
+    ltr: true,
+    group: 'social',
+  },
+  {
+    key: 'tiktok',
+    label: 'رابط حساب تيك توك',
+    type: 'url',
+    ltr: true,
+    group: 'social',
+  },
+  {
+    key: 'whatsappDirect',
+    label: 'رابط واتساب مباشر',
+    type: 'url',
+    ltr: true,
+    group: 'social',
+  },
+  {
+    key: 'whatsappGroup',
+    label: 'رابط مجموعة واتساب',
+    type: 'url',
+    ltr: true,
+    group: 'social',
+  },
+  {
+    key: 'mapsUrl',
+    label: 'رابط خرائط Google',
+    type: 'url',
+    ltr: true,
+    group: 'location',
+  },
   {
     key: 'osmCopyright',
     label: 'رابط حقوق OpenStreetMap',
     type: 'url',
     ltr: true,
+    group: 'location',
+  },
+  {
+    key: 'orgNumber',
+    label: 'رقم تسجيل الجمعية',
+    ltr: true,
+    group: 'org',
+  },
+  {
+    key: 'founded',
+    label: 'سنة التأسيس',
+    ltr: true,
+    group: 'org',
+  },
+  {
+    key: 'city',
+    label: 'المدينة',
+    group: 'org',
   },
 ];
 
@@ -90,34 +183,55 @@ export function createSettingsView(options: SettingsViewOptions): {
     title.textContent = 'بيانات التواصل';
     const description = document.createElement('p');
     description.textContent =
-      'البريد، الهاتف، واتساب، يوتيوب، تيك توك، رقم التسجيل، والعنوان. تُستخدم هذه القيم في الهيدر والفوتر وصفحة اللقاءات.';
+      'البريد، الهاتف، روابط يوتيوب وتيك توك وواتساب، رقم التسجيل، والعنوان. كل رابط في مجموعته المرتبطة.';
     copy.append(title, description);
     head.append(copy);
     container.append(head);
 
     const form = document.createElement('div');
-    form.className = 'admin-fields settings-fields';
+    form.className = 'settings-fields';
 
-    for (const field of FIELDS) {
-      const label = document.createElement('label');
-      label.className = 'admin-field';
+    for (const group of GROUPS) {
+      const groupFields = FIELDS.filter((field) => field.group === group.id);
+      if (groupFields.length === 0) continue;
 
-      const caption = document.createElement('span');
-      caption.className = 'admin-field__label';
-      caption.textContent = field.label;
+      const fieldset = document.createElement('fieldset');
+      fieldset.className = 'admin-group settings-group';
 
-      const input = document.createElement('input');
-      input.className = 'admin-input';
-      input.type = field.type ?? 'text';
-      input.value = data[field.key] ?? '';
-      if (field.ltr) input.dir = 'ltr';
-      input.addEventListener('input', () => {
-        data[field.key] = input.value;
-        markDirty();
-      });
+      const legend = document.createElement('legend');
+      legend.textContent = group.label;
 
-      label.append(caption, input);
-      form.append(label);
+      const groupDescription = document.createElement('p');
+      groupDescription.className = 'settings-group__description';
+      groupDescription.textContent = group.description;
+
+      const grid = document.createElement('div');
+      grid.className = 'admin-fields';
+
+      for (const field of groupFields) {
+        const label = document.createElement('label');
+        label.className = 'admin-field';
+
+        const caption = document.createElement('span');
+        caption.className = 'admin-field__label';
+        caption.textContent = field.label;
+
+        const input = document.createElement('input');
+        input.className = 'admin-input';
+        input.type = field.type ?? 'text';
+        input.value = data[field.key] ?? '';
+        if (field.ltr) input.dir = 'ltr';
+        input.addEventListener('input', () => {
+          data[field.key] = input.value;
+          markDirty();
+        });
+
+        label.append(caption, input);
+        grid.append(label);
+      }
+
+      fieldset.append(legend, groupDescription, grid);
+      form.append(fieldset);
     }
 
     container.append(form);

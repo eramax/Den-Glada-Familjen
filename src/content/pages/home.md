@@ -162,11 +162,6 @@ ar:
     locationLabel: الموقع
     location: ABF-huset — Pilgatan 2, Västerås
     locationNote: لقاءاتنا كل أحد في مكاتب ABF.
-    socialLabel: تابعنا
-    socials:
-      youtube: قناة الجمعية على يوتيوب
-      tiktok: حساب الجمعية على تيك توك
-      whatsapp: تواصل عبر واتساب
     form:
       title: أرسل رسالة
       name: الاسم
@@ -342,11 +337,6 @@ sv:
     locationLabel: Plats
     location: ABF-huset — Pilgatan 2, Västerås
     locationNote: Våra möten varje söndag i ABF-huset.
-    socialLabel: Följ oss
-    socials:
-      youtube: Föreningens YouTube-kanal
-      tiktok: Föreningens TikTok-konto
-      whatsapp: Kontakta oss på WhatsApp
     form:
       title: Skicka ett meddelande
       name: Namn

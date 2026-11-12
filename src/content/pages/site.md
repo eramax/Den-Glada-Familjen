@@ -21,7 +21,6 @@ ar:
         label: تواصل معنا
     join: انضم إلينا
     menu: القائمة
-    close: إغلاق
   a11y:
     skip: انتقل إلى المحتوى
     langSwitch: تبديل اللغة إلى السويدية
@@ -62,7 +61,6 @@ sv:
         label: Kontakt
     join: Bli en del
     menu: Meny
-    close: Stäng
   a11y:
     skip: Hoppa till innehållet
     langSwitch: Byt språk till arabiska

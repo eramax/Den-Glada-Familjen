@@ -38,10 +38,9 @@ ar:
     timelineTitle: ماذا فعلنا أسبوعًا بأسبوع؟
     timelineLead: ملخصات، صور، فيديو، وأنشطة من لقاءاتنا السابقة والقادمة.
     timelineEnd: المزيد قريبًا
-    latestLabel: أحدث اللقاءات
-    allLabel: كل اللقاءات
+
     detailsLabel: تفاصيل اللقاء
-    summaryLabel: ملخص اللقاء
+
     adultsLabel: أنشطة الكبار
     childrenLabel: أنشطة الأطفال
     lectureLabel: المحاضرة التعليمية
@@ -97,10 +96,9 @@ sv:
     timelineTitle: Vad gjorde vi vecka för vecka?
     timelineLead: Sammanfattningar, bilder, video och aktiviteter från våra möten.
     timelineEnd: Mer kommer
-    latestLabel: Senaste mötena
-    allLabel: Alla möten
+
     detailsLabel: Mötets detaljer
-    summaryLabel: Sammanfattning
+
     adultsLabel: Aktiviteter för vuxna
     childrenLabel: Aktiviteter för barn
     lectureLabel: Föreläsning
