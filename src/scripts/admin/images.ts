@@ -4,135 +4,61 @@ import type { MetaResponse } from './types';
 import { loadingBlock, toast as showToast } from './ui';
 import type { ToastOptions } from './ui';
 
-export type ImageGroup = 'identity' | 'site';
-
 interface ImageSlot {
   path: string;
   label: string;
   description: string;
   type: 'photo' | 'logo';
-  group: ImageGroup;
 }
 
 const SLOTS: ImageSlot[] = [
   {
-    path: 'src/assets/images/hero.jpg',
-    label: 'صورة الواجهة الرئيسية',
-    description: 'تظهر في أعلى الصفحة الرئيسية.',
-    type: 'photo',
-    group: 'site',
-  },
-  {
-    path: 'src/assets/images/about-main.jpg',
-    label: 'من نحن — الصورة الرئيسية',
-    description: 'الصورة الكبيرة في قسم «من نحن».',
-    type: 'photo',
-    group: 'site',
-  },
-  {
-    path: 'src/assets/images/about-small.jpg',
-    label: 'من نحن — الصورة الصغيرة',
-    description: 'الصورة الصغيرة بجانب قسم «من نحن».',
-    type: 'photo',
-    group: 'site',
-  },
-  {
-    path: 'src/assets/images/gallery-community.jpg',
-    label: 'المعرض — لقاءاتنا',
-    description: 'صورة «لقاءات تجمعنا» في المعرض.',
-    type: 'photo',
-    group: 'site',
-  },
-  {
-    path: 'src/assets/images/gallery-kids.jpg',
-    label: 'المعرض — إبداع الأطفال',
-    description: 'صورة أنشطة الأطفال في المعرض.',
-    type: 'photo',
-    group: 'site',
-  },
-  {
-    path: 'src/assets/images/gallery-trip.jpg',
-    label: 'المعرض — الرحلات',
-    description: 'صورة الرحلات العائلية في المعرض.',
-    type: 'photo',
-    group: 'site',
-  },
-  {
-    path: 'src/assets/images/gallery-dinner.jpg',
-    label: 'المعرض — الموائد',
-    description: 'صورة «موائد العائلة» في المعرض.',
-    type: 'photo',
-    group: 'site',
-  },
-  {
-    path: 'src/assets/images/meeting-dialogue.jpg',
-    label: 'اللقاءات — الحوار',
-    description: 'صورة توضيحية تُستخدم في اللقاء الأول.',
-    type: 'photo',
-    group: 'site',
-  },
-  {
-    path: 'src/assets/images/meeting-workshop.jpg',
-    label: 'اللقاءات — الورشة',
-    description: 'صورة توضيحية تُستخدم في اللقاء الأول.',
-    type: 'photo',
-    group: 'site',
-  },
-  {
     path: 'src/assets/images/logo-full.png',
     label: 'الشعار الكامل',
-    description: 'يُفضّل PNG بخلفية شفافة. يظهر في الفوتر واللوحة.',
+    description: 'يُفضّل PNG بخلفية شفافة. يظهر في الهيدر والفوتر واللوحة.',
     type: 'logo',
-    group: 'identity',
   },
   {
     path: 'src/assets/images/logo-mark.png',
     label: 'علامة الشعار',
     description: 'النسخة المختصرة من الشعار.',
     type: 'logo',
-    group: 'identity',
   },
   {
     path: 'public/favicon-32.png',
     label: 'أيقونة الموقع 32×32',
     description: 'تظهر في تبويب المتصفح والمفضلة.',
     type: 'logo',
-    group: 'identity',
   },
   {
     path: 'public/favicon-192.png',
     label: 'أيقونة الموقع 192×192',
     description: 'تُستخدم عند تثبيت الموقع على الشاشة الرئيسية.',
     type: 'logo',
-    group: 'identity',
   },
   {
     path: 'public/favicon-512.png',
     label: 'أيقونة الموقع 512×512',
     description: 'نسخة كبيرة لأيقونة الموقع.',
     type: 'logo',
-    group: 'identity',
   },
   {
     path: 'public/apple-touch-icon.png',
     label: 'أيقونة Apple',
     description: 'تظهر عند إضافة الموقع إلى الشاشة الرئيسية على iOS.',
     type: 'logo',
-    group: 'identity',
   },
   {
     path: 'public/og-image-ar.jpg',
     label: 'صورة المشاركة — عربي',
     description: 'تظهر عند مشاركة الموقع على وسائل التواصل (Open Graph).',
     type: 'photo',
-    group: 'identity',
   },
   {
     path: 'public/og-image-sv.jpg',
     label: 'صورة المشاركة — سويدي',
     description: 'تظهر عند مشاركة النسخة السويدية على وسائل التواصل.',
     type: 'photo',
-    group: 'identity',
   },
 ];
 
@@ -169,10 +95,10 @@ export function createImagesView(options: ImagesViewOptions): {
 
     const copy = document.createElement('div');
     const title = document.createElement('h2');
-    title.textContent = 'الصور والشعار';
+    title.textContent = 'الشعار وأيقونة الموقع';
     const lead = document.createElement('p');
     lead.textContent =
-      'كل صور الموقع، الشعار، أيقونة الموقع، وصور المشاركة في مكان واحد. تُضغط الصور تلقائيًا قبل الرفع.';
+      'الشعار، أيقونة الموقع، وصور المشاركة. تُضغط الصور تلقائيًا قبل الرفع.';
     copy.append(title, lead);
     head.append(copy);
     container.append(head);
@@ -180,7 +106,7 @@ export function createImagesView(options: ImagesViewOptions): {
     const note = document.createElement('p');
     note.className = 'editor-note';
     note.textContent =
-      'استبدال الصورة يغيّر الملف الأصلي في المستودع، وقد تظهر الصورة نفسها في أكثر من قسم.';
+      'الشعار يظهر في الهيدر والفوتر. أيقونة الموقع تُستخدم في تبويب المتصفح. صور الصفحات تُدار من نموذج كل صفحة.';
     container.append(note);
 
     const grid = document.createElement('div');
@@ -281,12 +207,6 @@ export function createImagesView(options: ImagesViewOptions): {
     });
 
     container.append(grid);
-
-    const bottomNote = document.createElement('p');
-    bottomNote.className = 'editor-note';
-    bottomNote.textContent =
-      'الشعار يظهر في الهيدر والفوتر واللوحة. أيقونة الموقع تُستخدم في تبويب المتصفح. صور اللقاءات تُدار من محرر اللقاء.';
-    container.append(bottomNote);
   };
 
   const load = async () => {

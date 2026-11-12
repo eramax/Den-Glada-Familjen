@@ -27,8 +27,8 @@ import {
 } from './ui';
 
 type PageTab = 'home' | 'meetingsPage' | 'site';
-type Section = PageTab | 'meetings' | 'images' | 'settings';
-type MainTab = 'content' | 'general';
+type Tab = 'home' | 'meetings' | 'general';
+type GeneralSection = 'identity' | 'site' | 'settings';
 
 interface PageDefinition {
   path: string;
@@ -61,29 +61,16 @@ const PAGES: Record<PageTab, PageDefinition> = {
   },
 };
 
-const MAIN_TABS: Array<{
-  id: MainTab;
-  label: string;
-  sections: Array<{ id: Section; label: string }>;
-}> = [
-  {
-    id: 'content',
-    label: 'المحتوى',
-    sections: [
-      { id: 'home', label: 'الصفحة الرئيسية' },
-      { id: 'meetingsPage', label: 'صفحة اللقاءات' },
-      { id: 'meetings', label: 'اللقاءات' },
-    ],
-  },
-  {
-    id: 'general',
-    label: 'عام',
-    sections: [
-      { id: 'images', label: 'الصور والشعار' },
-      { id: 'site', label: 'الهيدر والفوتر' },
-      { id: 'settings', label: 'بيانات التواصل' },
-    ],
-  },
+const TABS: Array<{ id: Tab; label: string }> = [
+  { id: 'home', label: 'الرئيسية' },
+  { id: 'meetings', label: 'اللقاءات' },
+  { id: 'general', label: 'عام' },
+];
+
+const GENERAL_SECTIONS: Array<{ id: GeneralSection; label: string }> = [
+  { id: 'identity', label: 'الشعار وأيقونة الموقع' },
+  { id: 'site', label: 'الهيدر والفوتر' },
+  { id: 'settings', label: 'بيانات التواصل' },
 ];
 
 function must<T extends Element>(selector: string): T {
@@ -118,8 +105,8 @@ const appRepo = must<HTMLElement>('#app-repo');
 const logoutButton = must<HTMLButtonElement>('#logout-button');
 
 let stored: StoredCredentials | null = null;
-let activeMain: MainTab = 'content';
-let activeSection: Section = 'home';
+let activeTab: Tab = 'home';
+let generalSection: GeneralSection = 'identity';
 let dirty = false;
 let renderToken = 0;
 
@@ -129,9 +116,10 @@ function setDirty(value: boolean): void {
 
 function resetNavigation(): void {
   setDirty(false);
-  activeMain = 'content';
-  activeSection = 'home';
+  activeTab = 'home';
+  generalSection = 'identity';
   renderToken += 1;
+  appSubTabs.hidden = true;
   appMain.replaceChildren();
 }
 
@@ -176,11 +164,9 @@ function showApp(): void {
     ? `${stored.repo} · ${stored.branch}`
     : '';
 
-  renderMainTabs();
-  renderSubTabs();
-  updateMainTabs();
-  updateSubTabs();
-  void renderSection();
+  renderTabs();
+  appSubTabs.hidden = true;
+  void activate('home');
 }
 
 function handleAuthError(
@@ -219,113 +205,105 @@ async function confirmDiscard(): Promise<boolean> {
   return true;
 }
 
-function renderMainTabs(): void {
+function renderTabs(): void {
   appTabs.replaceChildren();
-  for (const main of MAIN_TABS) {
+  for (const tab of TABS) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'app__tab';
-    button.dataset.main = main.id;
-    button.textContent = main.label;
+    button.dataset.tab = tab.id;
+    button.textContent = tab.label;
     button.addEventListener('click', () => {
-      void switchMain(main.id);
+      void activate(tab.id);
     });
     appTabs.append(button);
   }
 }
 
-function renderSubTabs(): void {
-  const main = MAIN_TABS.find((item) => item.id === activeMain);
-  if (!main) return;
+function updateTabs(): void {
+  appTabs.querySelectorAll<HTMLButtonElement>('.app__tab').forEach((button) => {
+    const isActive = button.dataset.tab === activeTab;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-current', isActive ? 'page' : 'false');
+  });
+}
 
+function renderGeneralSubTabs(): void {
   appSubTabs.replaceChildren();
-  for (const section of main.sections) {
+  for (const section of GENERAL_SECTIONS) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'app__subtab';
     button.dataset.section = section.id;
     button.textContent = section.label;
     button.addEventListener('click', () => {
-      void activateSection(section.id);
+      void activateGeneralSection(section.id);
     });
     appSubTabs.append(button);
   }
+  updateGeneralSubTabs();
 }
 
-function updateMainTabs(): void {
-  appTabs.querySelectorAll<HTMLButtonElement>('.app__tab').forEach((button) => {
-    const isActive = button.dataset.main === activeMain;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-current', isActive ? 'page' : 'false');
-  });
-}
-
-function updateSubTabs(): void {
+function updateGeneralSubTabs(): void {
   appSubTabs
     .querySelectorAll<HTMLButtonElement>('.app__subtab')
     .forEach((button) => {
-      const isActive = button.dataset.section === activeSection;
+      const isActive = button.dataset.section === generalSection;
       button.classList.toggle('is-active', isActive);
       button.setAttribute('aria-current', isActive ? 'page' : 'false');
     });
 }
 
-async function switchMain(mainId: MainTab): Promise<void> {
-  if (mainId === activeMain && appMain.childElementCount > 0) return;
+async function activate(tab: Tab): Promise<void> {
+  if (tab === activeTab && appMain.childElementCount > 0) return;
   if (!(await confirmDiscard())) return;
 
-  const main = MAIN_TABS.find((item) => item.id === mainId);
-  if (!main) return;
+  activeTab = tab;
+  updateTabs();
+  appMain.replaceChildren();
+  appSubTabs.hidden = tab !== 'general';
 
-  activeMain = mainId;
-  activeSection = main.sections[0].id;
-  updateMainTabs();
-  renderSubTabs();
-  updateSubTabs();
-  await renderSection();
+  if (tab === 'general') {
+    renderGeneralSubTabs();
+    await activateGeneralSection(generalSection);
+    return;
+  }
+
+  if (tab === 'meetings') {
+    await renderMeetingsTab();
+    return;
+  }
+
+  await renderPage(tab);
 }
 
-async function activateSection(section: Section): Promise<void> {
-  if (section === activeSection && appMain.childElementCount > 0) return;
+async function activateGeneralSection(section: GeneralSection): Promise<void> {
+  if (
+    section === generalSection &&
+    activeTab === 'general' &&
+    appMain.childElementCount > 0
+  ) {
+    return;
+  }
   if (!(await confirmDiscard())) return;
 
-  activeSection = section;
-  updateSubTabs();
-  await renderSection();
-}
-
-async function renderSection(): Promise<void> {
+  generalSection = section;
+  appSubTabs.hidden = false;
+  updateGeneralSubTabs();
   appMain.replaceChildren();
 
-  if (activeSection === 'meetings') {
-    const panel = document.createElement('div');
-    appMain.append(panel);
-    const view = createMeetingsView({
-      container: panel,
-      setDirty,
-      confirm: confirmDialog,
-      onAuthError: () => handleAuthError(),
-    });
-    await view.load();
-    return;
-  }
-
-  if (activeSection === 'images') {
-    const panel = document.createElement('div');
-    appMain.append(panel);
+  if (section === 'identity') {
     const view = createImagesView({
-      container: panel,
+      container: appMain,
       onAuthError: () => handleAuthError(),
     });
     await view.load();
     return;
   }
 
-  if (activeSection === 'settings') {
-    const panel = document.createElement('div');
-    appMain.append(panel);
+  if (section === 'settings') {
     const view = createSettingsView({
-      container: panel,
+      container: appMain,
       setDirty,
       onAuthError: () => handleAuthError(),
     });
@@ -333,7 +311,153 @@ async function renderSection(): Promise<void> {
     return;
   }
 
-  await renderPage(activeSection);
+  await renderPage('site');
+}
+
+async function renderMeetingsTab(): Promise<void> {
+  appMain.replaceChildren();
+
+  let meetingsDirty = false;
+  let pageTextDirty = false;
+  const updateDirty = () => setDirty(meetingsDirty || pageTextDirty);
+
+  const listPanel = document.createElement('div');
+  appMain.append(listPanel);
+
+  const view = createMeetingsView({
+    container: listPanel,
+    setDirty: (value) => {
+      meetingsDirty = value;
+      updateDirty();
+    },
+    confirm: confirmDialog,
+    onAuthError: () => handleAuthError(),
+  });
+  await view.load();
+
+  const details = document.createElement('details');
+  details.className = 'meetings-page-text';
+
+  const summary = document.createElement('summary');
+  summary.className = 'meetings-page-text__summary';
+  const summaryText = document.createElement('span');
+  summaryText.textContent =
+    'نصوص صفحة اللقاءات — الموعد، المكان، الأرشيف';
+  summary.append(summaryText);
+
+  const body = document.createElement('div');
+  body.className = 'meetings-page-text__body';
+
+  details.append(summary, body);
+  appMain.append(details);
+
+  await renderMeetingsPageText(body, (value) => {
+    pageTextDirty = value;
+    updateDirty();
+  });
+}
+
+async function renderMeetingsPageText(
+  container: HTMLElement,
+  onDirty: (dirty: boolean) => void,
+): Promise<void> {
+  const definition = PAGES.meetingsPage;
+  container.replaceChildren(loadingBlock('جارٍ تحميل نصوص صفحة اللقاءات...'));
+
+  const response = await guard(() => api.getContent(definition.path));
+  if (!response) {
+    container.replaceChildren();
+    return;
+  }
+
+  let parsed: ReturnType<typeof parseMarkdown<PageData>>;
+  try {
+    parsed = parseMarkdown<PageData>(response.text);
+  } catch (error) {
+    container.replaceChildren();
+    toast(
+      error instanceof Error ? error.message : 'تعذّر قراءة الملف.',
+      { type: 'error' },
+    );
+    return;
+  }
+
+  const page = {
+    path: definition.path,
+    sha: response.sha,
+    data: parsed.data,
+    body: parsed.body,
+  };
+
+  container.replaceChildren();
+
+  const intro = document.createElement('div');
+  intro.className = 'meetings-page-text__intro';
+
+  const description = document.createElement('p');
+  description.textContent =
+    'عدّل الموعد، المكان، بطاقات التنسيق، ونصوص الأرشيف. تُحفظ التغييرات في صفحة اللقاءات.';
+
+  const preview = document.createElement('a');
+  preview.className = 'btn btn--small btn--ghost';
+  preview.href = definition.preview;
+  preview.target = '_blank';
+  preview.rel = 'noopener noreferrer';
+  preview.textContent = 'معاينة صفحة اللقاءات';
+
+  intro.append(description, preview);
+
+  const formContainer = document.createElement('div');
+  formContainer.className = 'editor-form';
+
+  const bar = document.createElement('div');
+  bar.className = 'admin-savebar admin-savebar--inline';
+
+  const status = document.createElement('span');
+  status.className = 'admin-savebar__status';
+  status.textContent = 'كل التغييرات محفوظة';
+
+  const save = document.createElement('button');
+  save.type = 'button';
+  save.className = 'btn btn--primary';
+  save.textContent = 'حفظ نصوص الصفحة';
+
+  const markDirty = () => {
+    onDirty(true);
+    status.textContent = 'تغييرات غير محفوظة';
+    status.classList.add('is-dirty');
+  };
+
+  renderPageForm(formContainer, parsed.data, markDirty);
+
+  save.addEventListener('click', async () => {
+    setBusy(save, true);
+    try {
+      const text = serializeMarkdown(page.data, page.body);
+      const saved = await api.saveContent(page.path, page.sha, text);
+      page.sha = saved.sha;
+      onDirty(false);
+      status.textContent = 'تم الحفظ — سيظهر الموقع خلال 1–2 دقيقة.';
+      status.classList.remove('is-dirty');
+      toast('تم حفظ نصوص صفحة اللقاءات.', {
+        link: saved.commitUrl,
+      });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        handleAuthError();
+        return;
+      }
+      toast(
+        error instanceof Error ? error.message : 'تعذّر حفظ الصفحة.',
+        { type: 'error' },
+      );
+    } finally {
+      setBusy(save, false);
+    }
+  });
+
+  bar.append(status, save);
+  container.append(intro, formContainer, bar);
 }
 
 async function renderPage(tab: PageTab): Promise<void> {

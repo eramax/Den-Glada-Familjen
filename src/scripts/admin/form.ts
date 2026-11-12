@@ -1,4 +1,7 @@
+import { api, imageUrl } from './api';
+import { extensionFromPath, prepareImage } from './image-utils';
 import { labelFor, SECTION_LABELS } from './labels';
+import { toast } from './ui';
 
 type JsonObject = Record<string, unknown>;
 type Lang = 'ar' | 'sv';
@@ -36,6 +39,64 @@ const NO_ADD_PATHS = new Set(['gallery.items']);
 
 // Fields that are identical in both languages (identifiers, icons, links).
 const SHARED_KEYS = new Set(['id', 'href', 'icon', 'tone', 'key']);
+
+const CONTENT_IMAGE_PATHS: Record<
+  string,
+  { path: string; label: string }
+> = {
+  'hero.imageAlt': {
+    path: 'src/assets/images/hero.jpg',
+    label: 'صورة الواجهة الرئيسية',
+  },
+  'about.imageAltMain': {
+    path: 'src/assets/images/about-main.jpg',
+    label: 'من نحن — الصورة الرئيسية',
+  },
+  'about.imageAltSmall': {
+    path: 'src/assets/images/about-small.jpg',
+    label: 'من نحن — الصورة الصغيرة',
+  },
+  'meetingsPage.mapAlt': {
+    path: 'src/assets/images/map-pilgatan.png',
+    label: 'خريطة الموقع',
+  },
+};
+
+const GALLERY_IMAGES: Record<string, { path: string; label: string }> = {
+  community: {
+    path: 'src/assets/images/gallery-community.jpg',
+    label: 'المعرض — لقاءاتنا',
+  },
+  kids: {
+    path: 'src/assets/images/gallery-kids.jpg',
+    label: 'المعرض — إبداع الأطفال',
+  },
+  trip: {
+    path: 'src/assets/images/gallery-trip.jpg',
+    label: 'المعرض — الرحلات',
+  },
+  dinner: {
+    path: 'src/assets/images/gallery-dinner.jpg',
+    label: 'المعرض — موائد العائلة',
+  },
+};
+
+function resolveContentImage(
+  path: string,
+  arParent: JsonObject,
+): { path: string; label: string } | null {
+  const direct = CONTENT_IMAGE_PATHS[path];
+  if (direct) return direct;
+
+  if (/^gallery\.items\[\d+\]\.alt$/.test(path)) {
+    const key = arParent.key;
+    if (typeof key === 'string' && GALLERY_IMAGES[key]) {
+      return GALLERY_IMAGES[key];
+    }
+  }
+
+  return null;
+}
 
 // Most useful sections first, technical/SEO sections last.
 const SECTION_ORDER = [
@@ -136,6 +197,106 @@ function makeControl(
   return element;
 }
 
+function renderContentImage(
+  imagePath: string,
+  label: string,
+): HTMLElement {
+  const card = document.createElement('div');
+  card.className = 'content-image';
+
+  const preview = document.createElement('div');
+  preview.className = 'content-image__preview';
+
+  const image = document.createElement('img');
+  image.alt = label;
+  image.src = imageUrl(imagePath);
+  image.addEventListener('error', () => {
+    image.hidden = true;
+  });
+  preview.append(image);
+
+  const body = document.createElement('div');
+  body.className = 'content-image__body';
+
+  const title = document.createElement('span');
+  title.className = 'content-image__label';
+  title.textContent = label;
+
+  const hint = document.createElement('span');
+  hint.className = 'content-image__hint';
+  hint.textContent = 'تُحفظ الصورة فور رفعها، والوصف يُحفظ مع الصفحة.';
+
+  const replaceLabel = document.createElement('label');
+  replaceLabel.className = 'btn btn--small btn--ghost';
+
+  const replaceText = document.createElement('span');
+  replaceText.textContent = 'استبدال الصورة';
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png,image/webp';
+  input.hidden = true;
+
+  let sha = '';
+
+  api
+    .getMeta(imagePath)
+    .then((meta) => {
+      sha = meta.sha;
+      image.src = imageUrl(imagePath, sha);
+      image.hidden = false;
+    })
+    .catch(() => {
+      // The image may be new; upload will create it.
+    });
+
+  input.addEventListener('change', async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    replaceText.textContent = 'جارٍ الرفع...';
+    input.disabled = true;
+
+    try {
+      if (!sha) {
+        try {
+          const meta = await api.getMeta(imagePath);
+          sha = meta.sha;
+        } catch {
+          // New file.
+        }
+      }
+
+      const prepared = await prepareImage(
+        file,
+        extensionFromPath(imagePath),
+        imagePath.includes('logo') ? 900 : 2000,
+      );
+      const result = await api.upload(imagePath, sha, prepared.base64);
+      sha = result.sha;
+      image.src = imageUrl(imagePath, result.sha);
+      image.hidden = false;
+      toast('تم رفع الصورة. ستظهر بعد إعادة البناء.', {
+        link: result.commitUrl,
+      });
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : 'تعذّر رفع الصورة.',
+        { type: 'error' },
+      );
+    } finally {
+      replaceText.textContent = 'استبدال الصورة';
+      input.disabled = false;
+      input.value = '';
+    }
+  });
+
+  replaceLabel.append(replaceText, input);
+  body.append(title, hint, replaceLabel);
+  card.append(preview, body);
+  return card;
+}
+
 function renderSharedField(
   arParent: JsonObject,
   svParent: JsonObject,
@@ -218,6 +379,18 @@ function renderPair(
   }
 
   field.append(caption, grid);
+
+  const contentImage = resolveContentImage(path, arParent);
+  if (contentImage) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'image-with-alt';
+    wrapper.append(
+      renderContentImage(contentImage.path, contentImage.label),
+      field,
+    );
+    return wrapper;
+  }
+
   return field;
 }
 
