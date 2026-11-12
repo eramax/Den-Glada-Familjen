@@ -3,7 +3,7 @@ import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from './Icon.astro';
 import mapPilgatan from '../assets/images/map-pilgatan.png';
-import { meetings } from '../data/meetings';
+import { getMeetings } from '../data/meetings';
 import { getDict, paths } from '../i18n';
 import { formatMeetingDate } from '../lib/format';
 import { SITE } from '../data/site';
@@ -14,7 +14,8 @@ interface Props {
 }
 
 const { lang } = Astro.props;
-const t = getDict(lang);
+const t = await getDict(lang, 'meetings');
+const meetings = await getMeetings();
 const homePath = paths[lang];
 const photoSizes = '(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 30vw';
 ---

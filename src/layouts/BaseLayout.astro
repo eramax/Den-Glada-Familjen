@@ -68,6 +68,13 @@ const faqLd = {
     },
   })),
 };
+
+// Keep admin-edited content from closing the JSON-LD <script> tag.
+const toJsonLd = (value: unknown) =>
+  JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
 ---
 
 <!doctype html>
@@ -106,8 +113,8 @@ const faqLd = {
     <meta name="twitter:description" content={pageDescription} />
     <meta name="twitter:image" content={ogImage} />
 
-    <script type="application/ld+json" set:html={JSON.stringify(organizationLd)} />
-    {includeFaqLd && <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />}
+    <script type="application/ld+json" set:html={toJsonLd(organizationLd)} />
+    {includeFaqLd && <script type="application/ld+json" set:html={toJsonLd(faqLd)} />}
     <slot name="head" />
   </head>
 

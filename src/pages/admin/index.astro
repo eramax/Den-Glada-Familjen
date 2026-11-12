@@ -1,0 +1,111 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import logoFull from '../../assets/images/logo-full.png';
+---
+
+<AdminLayout title="لوحة التحكم">
+  <div id="login-view" class="login">
+    <div class="login__card">
+      <img
+        class="login__logo"
+        src={logoFull.src}
+        width={logoFull.width}
+        height={logoFull.height}
+        alt="جمعية الأسرة السعيدة"
+      />
+      <h1 class="login__title">لوحة التحكم</h1>
+      <p class="login__lead">
+        سجّل الدخول لإدارة نصوص الموقع والصور واللقاءات الأسبوعية.
+      </p>
+
+      <form id="login-form" class="login__form">
+        <label class="field">
+          <span class="field__label">اسم المستخدم</span>
+          <input
+            id="login-username"
+            class="field__input"
+            name="username"
+            type="text"
+            autocomplete="username"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">كلمة السر</span>
+          <input
+            id="login-password"
+            class="field__input"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </label>
+
+        <p id="login-error" class="login__error" role="alert" hidden></p>
+
+        <button id="login-submit" class="btn btn--primary btn--block" type="submit">
+          دخول
+        </button>
+      </form>
+
+      <a class="login__back" href="/">العودة إلى الموقع</a>
+    </div>
+  </div>
+
+  <div id="app-view" class="app" hidden>
+    <header class="app__header">
+      <a class="app__brand" href="/" aria-label="العودة إلى الموقع">
+        <img
+          class="app__logo"
+          src={logoFull.src}
+          width={logoFull.width}
+          height={logoFull.height}
+          alt=""
+        />
+        <div class="app__brand-copy">
+          <h1 class="app__brand-title">لوحة التحكم</h1>
+          <small>جمعية الأسرة السعيدة</small>
+        </div>
+      </a>
+
+      <div class="app__actions">
+        <span class="app__user">مرحبًا، <strong id="user-name"></strong></span>
+        <a
+          class="btn btn--ghost btn--small"
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          عرض الموقع
+        </a>
+        <button id="logout-button" class="btn btn--ghost btn--small" type="button">
+          خروج
+        </button>
+      </div>
+    </header>
+
+    <nav id="app-tabs" class="app__tabs" aria-label="أقسام لوحة التحكم"></nav>
+
+    <p class="app__note">
+      كل عملية حفظ تُنشئ commit في GitHub وتعيد بناء الموقع تلقائيًا. يظهر
+      التعديل عادة خلال 1–2 دقيقة.
+    </p>
+
+    <main id="app-main" class="app__main"></main>
+  </div>
+
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+  <div id="modal-root"></div>
+
+  <noscript>
+    <p class="noscript">
+      تحتاج إلى تفعيل JavaScript لاستخدام لوحة التحكم.
+    </p>
+  </noscript>
+
+  <script>
+    import '../../scripts/admin/main';
+  </script>
+</AdminLayout>

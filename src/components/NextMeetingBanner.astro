@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { latestMeetings } from '../data/meetings';
+import { getMeetings } from '../data/meetings';
 import { meetingPaths } from '../i18n';
 import { formatMeetingDate } from '../lib/format';
 import type { Dict, Lang } from '../i18n';
@@ -11,7 +11,11 @@ interface Props {
 }
 
 const { lang, t } = Astro.props;
-const meeting = latestMeetings[0];
+const meetings = await getMeetings();
+const today = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Europe/Stockholm',
+}).format(new Date());
+const meeting = meetings.find((item) => item.date >= today);
 const meetingPath = meetingPaths[lang];
 ---
 

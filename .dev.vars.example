@@ -1,0 +1,11 @@
+# Local development secrets for `wrangler pages dev`.
+# Copy this file to `.dev.vars` and fill in real values.
+# NEVER commit `.dev.vars`.
+
+ADMIN_USER=admin
+ADMIN_PASSWORD_HASH='pbkdf2-sha256$50000$REPLACE_WITH_SALT$REPLACE_WITH_HASH'
+AUTH_SECRET='replace-with-a-random-48-byte-base64-string'
+GITHUB_TOKEN='github_pat_replace_me'
+GITHUB_REPO=eramax/Den-Glada-Familjen
+GITHUB_BRANCH=main
+SESSION_HOURS=12

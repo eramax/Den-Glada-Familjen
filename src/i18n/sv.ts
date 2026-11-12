@@ -312,7 +312,7 @@ export const sv: Dict = {
     contactTitle: 'Kontakt',
     followTitle: 'Följ oss',
     orgLabel: 'Organisationsnummer',
-    privacy: 'Vi använder inga cookies eller spårningsverktyg.',
+    privacy: 'Den publika webbplatsen använder inga cookies eller spårningsverktyg.',
     copyright: 'Föreningen Den Glada Familjen. Alla rättigheter förbehållna.',
     made: 'Skapad med kärlek i Västerås.',
     backToTop: 'Tillbaka till toppen',
