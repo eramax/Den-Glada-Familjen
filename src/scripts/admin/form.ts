@@ -40,6 +40,16 @@ const NO_ADD_PATHS = new Set(['gallery.items']);
 // Fields that are identical in both languages (identifiers, icons, links).
 const SHARED_KEYS = new Set(['id', 'href', 'icon', 'tone', 'key']);
 
+interface ImageFlush {
+  run: () => Promise<void>;
+}
+
+let activeImageFlushes: ImageFlush[] = [];
+
+export interface PageFormOptions {
+  registerFlush?: (flush: () => Promise<void>) => void;
+}
+
 const CONTENT_IMAGE_PATHS: Record<
   string,
   { path: string; label: string }
@@ -197,9 +207,25 @@ function makeControl(
   return element;
 }
 
+function base64ToBlob(base64: string, extension: string): Blob {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  const type =
+    extension === 'png'
+      ? 'image/png'
+      : extension === 'webp'
+        ? 'image/webp'
+        : 'image/jpeg';
+  return new Blob([bytes], { type });
+}
+
 function renderContentImage(
   imagePath: string,
   label: string,
+  onChange: () => void,
 ): HTMLElement {
   const card = document.createElement('div');
   card.className = 'content-image';
@@ -224,7 +250,7 @@ function renderContentImage(
 
   const hint = document.createElement('span');
   hint.className = 'content-image__hint';
-  hint.textContent = 'تُحفظ الصورة فور رفعها، والوصف يُحفظ مع الصفحة.';
+  hint.textContent = 'تُرفع الصورة عند حفظ الصفحة، والوصف يُحفظ معها.';
 
   const replaceLabel = document.createElement('label');
   replaceLabel.className = 'btn btn--small btn--ghost';
@@ -237,14 +263,16 @@ function renderContentImage(
   input.accept = 'image/jpeg,image/png,image/webp';
   input.hidden = true;
 
-  let sha = '';
+  let pending: { base64: string; previewUrl: string } | null = null;
+  let registered = false;
 
   api
     .getMeta(imagePath)
     .then((meta) => {
-      sha = meta.sha;
-      image.src = imageUrl(imagePath, sha);
-      image.hidden = false;
+      if (!pending) {
+        image.src = imageUrl(imagePath, meta.sha);
+        image.hidden = false;
+      }
     })
     .catch(() => {
       // The image may be new; upload will create it.
@@ -254,39 +282,55 @@ function renderContentImage(
     const file = input.files?.[0];
     if (!file) return;
 
-    replaceText.textContent = 'جارٍ الرفع...';
-    input.disabled = true;
-
     try {
-      if (!sha) {
-        try {
-          const meta = await api.getMeta(imagePath);
-          sha = meta.sha;
-        } catch {
-          // New file.
-        }
-      }
-
       const prepared = await prepareImage(
         file,
         extensionFromPath(imagePath),
-        imagePath.includes('logo') ? 900 : 2000,
+        2000,
       );
-      const result = await api.upload(imagePath, sha, prepared.base64);
-      sha = result.sha;
-      image.src = imageUrl(imagePath, result.sha);
+      if (pending) URL.revokeObjectURL(pending.previewUrl);
+      pending = {
+        base64: prepared.base64,
+        previewUrl: URL.createObjectURL(
+          base64ToBlob(prepared.base64, prepared.extension),
+        ),
+      };
+      image.src = pending.previewUrl;
       image.hidden = false;
-      toast('تم رفع الصورة. ستظهر بعد إعادة البناء.', {
-        link: result.commitUrl,
-      });
+      replaceText.textContent = 'ستُرفع عند الحفظ';
+      onChange();
+
+      if (!registered) {
+        registered = true;
+        activeImageFlushes.push({
+          run: async () => {
+            if (!pending) return;
+            const current = pending;
+            let sha = '';
+            try {
+              const meta = await api.getMeta(imagePath);
+              sha = meta.sha;
+            } catch {
+              // New file.
+            }
+            const result = await api.upload(imagePath, sha, current.base64);
+            pending = null;
+            URL.revokeObjectURL(current.previewUrl);
+            image.src = imageUrl(imagePath, result.sha);
+            image.hidden = false;
+            replaceText.textContent = 'استبدال الصورة';
+            toast('تم رفع الصورة. ستظهر بعد إعادة البناء.', {
+              link: result.commitUrl,
+            });
+          },
+        });
+      }
     } catch (error) {
       toast(
-        error instanceof Error ? error.message : 'تعذّر رفع الصورة.',
+        error instanceof Error ? error.message : 'تعذّر تجهيز الصورة.',
         { type: 'error' },
       );
     } finally {
-      replaceText.textContent = 'استبدال الصورة';
-      input.disabled = false;
       input.value = '';
     }
   });
@@ -385,7 +429,7 @@ function renderPair(
     const wrapper = document.createElement('div');
     wrapper.className = 'image-with-alt';
     wrapper.append(
-      renderContentImage(contentImage.path, contentImage.label),
+      renderContentImage(contentImage.path, contentImage.label, onChange),
       field,
     );
     return wrapper;
@@ -555,9 +599,9 @@ function renderArray(
 
         const remove = document.createElement('button');
         remove.type = 'button';
-        remove.className = 'icon-btn icon-btn--danger';
+        remove.className = 'btn btn--small btn--danger-ghost admin-array__delete';
         remove.setAttribute('aria-label', 'حذف العنصر');
-        remove.textContent = '×';
+        remove.textContent = 'حذف';
         remove.addEventListener('click', () => {
           arArray.splice(index, 1);
           svArray.splice(index, 1);
@@ -618,9 +662,9 @@ function renderArray(
 
       const remove = document.createElement('button');
       remove.type = 'button';
-      remove.className = 'icon-btn icon-btn--danger';
+      remove.className = 'btn btn--small btn--danger-ghost admin-array__delete';
       remove.setAttribute('aria-label', 'حذف العنصر');
-      remove.textContent = '×';
+      remove.textContent = 'حذف';
       remove.addEventListener('click', () => {
         arArray.splice(index, 1);
         svArray.splice(index, 1);
@@ -706,8 +750,17 @@ export function renderPageForm(
   container: HTMLElement,
   data: { ar: JsonObject; sv: JsonObject },
   onChange: () => void,
+  options: PageFormOptions = {},
 ): void {
   container.replaceChildren();
+
+  const flushes: ImageFlush[] = [];
+  activeImageFlushes = flushes;
+  options.registerFlush?.(async () => {
+    for (const item of flushes) {
+      await item.run();
+    }
+  });
 
   const toolbar = document.createElement('div');
   toolbar.className = 'editor-toolbar';

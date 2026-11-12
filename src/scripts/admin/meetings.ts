@@ -37,35 +37,59 @@ interface EditingMeeting {
   isNew: boolean;
 }
 
+interface PendingImage {
+  base64: string;
+  previewUrl: string;
+}
+
 const EMPTY_BODY = '\n<!-- يُحرَّر هذا الملف من لوحة التحكم /admin/ -->\n';
 
-function emptyMeeting(): MeetingData {
+function defaultVideo(): NonNullable<MeetingData['video']> {
   return {
-    date: todayIso(),
-    tag: { ar: '', sv: '' },
+    url: '',
+    label: { ar: '', sv: '' },
+    note: { ar: '', sv: '' },
+  };
+}
+
+function emptyMeeting(date = todayIso()): MeetingData {
+  return {
+    date,
     topic: { ar: '', sv: '' },
     summary: { ar: '', sv: '' },
-    takeaway: { ar: '', sv: '' },
     adults: { ar: '', sv: '' },
     children: { ar: '', sv: '' },
     lecture: { ar: '', sv: '' },
     images: [],
-    video: {
-      url: 'https://www.youtube.com/@dengladafamiljen7954',
-      label: {
-        ar: 'شاهد التسجيلات على يوتيوب',
-        sv: 'Se inspelningar på YouTube',
-      },
-      note: {
-        ar: 'تجدون تسجيلات اللقاءات على قناة الجمعية.',
-        sv: 'Du hittar inspelningar från mötena på föreningens kanal.',
-      },
-    },
+    video: defaultVideo(),
+  };
+}
+
+function normalizeMeeting(data: MeetingData): MeetingData {
+  return {
+    ...data,
+    images: Array.isArray(data.images) ? data.images : [],
+    video: data.video ?? defaultVideo(),
   };
 }
 
 function repoPathFromSrc(src: string): string {
   return `src/${src.replace(/^\.\.\/\.\.\//, '')}`;
+}
+
+function base64ToBlob(base64: string, extension: string): Blob {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  const type =
+    extension === 'png'
+      ? 'image/png'
+      : extension === 'webp'
+        ? 'image/webp'
+        : 'image/jpeg';
+  return new Blob([bytes], { type });
 }
 
 function localizedPair(
@@ -162,6 +186,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
   let editing: EditingMeeting | null = null;
   let dirty = false;
   let statusElement: HTMLElement | null = null;
+  const pendingImages = new Map<string, PendingImage>();
 
   const markDirty = () => {
     dirty = true;
@@ -196,6 +221,13 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     );
   };
 
+  const clearPendingImages = () => {
+    for (const pending of pendingImages.values()) {
+      URL.revokeObjectURL(pending.previewUrl);
+    }
+    pendingImages.clear();
+  };
+
   const renderList = () => {
     container.replaceChildren();
 
@@ -207,7 +239,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     title.textContent = 'اللقاءات الأسبوعية';
     const lead = document.createElement('p');
     lead.textContent =
-      'أضف لقاء كل أسبوع، وحدّث الموضوع والصور بعد انتهائه. تظهر اللقاءات في صفحة الأرشيف تلقائيًا.';
+      'أضف لقاء كل أسبوع، وحدّث الموضوع والصور بعد انتهائه. يمكن حفظ اللقاء بدون صور أو فيديو.';
     copy.append(title, lead);
 
     const add = document.createElement('button');
@@ -215,7 +247,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     add.className = 'btn btn--primary';
     add.textContent = '+ إضافة لقاء';
     add.addEventListener('click', () => {
-      void openEditor(null);
+      openAddModal();
     });
 
     head.append(copy, add);
@@ -254,17 +286,13 @@ export function createMeetingsView(options: MeetingsViewOptions): {
       const body = document.createElement('div');
       body.className = 'meeting-card__body';
 
-      const tag = document.createElement('span');
-      tag.className = 'meeting-card__tag';
-      tag.textContent = meeting.data.tag.ar;
-
       const topic = document.createElement('h3');
       topic.textContent = meeting.data.topic.ar;
 
       const summary = document.createElement('p');
       summary.textContent = meeting.data.summary.ar;
 
-      body.append(tag, topic, summary);
+      body.append(topic, summary);
 
       const actions = document.createElement('div');
       actions.className = 'meeting-card__actions';
@@ -293,7 +321,138 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     container.append(list);
   };
 
-  const openEditor = async (meeting: LoadedMeeting | null) => {
+  const openAddModal = () => {
+    const root = document.querySelector<HTMLElement>('#modal-root');
+    if (!root) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal';
+
+    const card = document.createElement('div');
+    card.className = 'modal__card modal__card--wide';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('aria-labelledby', 'add-meeting-title');
+
+    const title = document.createElement('h2');
+    title.className = 'modal__title';
+    title.id = 'add-meeting-title';
+    title.textContent = 'إضافة لقاء';
+
+    const lead = document.createElement('p');
+    lead.className = 'modal__text';
+    lead.textContent =
+      'اختر تاريخ اللقاء واكتب الموضوع والملخص. يمكنك إضافة الصور والفيديو بعد ذلك.';
+
+    const form = document.createElement('div');
+    form.className = 'modal__form';
+
+    const date = document.createElement('input');
+    date.type = 'date';
+    date.className = 'admin-input';
+    date.value = todayIso();
+
+    const dateHint = document.createElement('p');
+    dateHint.className = 'editor-hint';
+    const updateDateHint = () => {
+      dateHint.textContent = date.value
+        ? `${date.value} · ${formatMeetingDate(date.value, 'ar')}`
+        : 'اختر تاريخ اللقاء';
+    };
+    updateDateHint();
+    date.addEventListener('input', updateDateHint);
+
+    const dateField = document.createElement('label');
+    dateField.className = 'admin-field';
+    const dateLabel = document.createElement('span');
+    dateLabel.className = 'admin-field__label';
+    dateLabel.textContent = 'تاريخ اللقاء';
+    dateField.append(dateLabel, dateHint, date);
+
+    const topic = { ar: '', sv: '' };
+    const summary = { ar: '', sv: '' };
+
+    form.append(
+      dateField,
+      localizedPair('موضوع اللقاء', topic, () => {}),
+      localizedPair('ملخص اللقاء', summary, () => {}, true),
+    );
+
+    const error = document.createElement('p');
+    error.className = 'login__error';
+    error.setAttribute('role', 'alert');
+    error.hidden = true;
+
+    const actions = document.createElement('div');
+    actions.className = 'modal__actions';
+
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'btn btn--ghost';
+    cancel.textContent = 'إلغاء';
+
+    const create = document.createElement('button');
+    create.type = 'button';
+    create.className = 'btn btn--primary';
+    create.textContent = 'إنشاء ومتابعة';
+
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close();
+    };
+
+    const close = () => {
+      document.removeEventListener('keydown', onKeydown);
+      overlay.remove();
+    };
+
+    cancel.addEventListener('click', close);
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) close();
+    });
+
+    document.addEventListener('keydown', onKeydown);
+
+    create.addEventListener('click', () => {
+      if (!date.value || !/^\d{4}-\d{2}-\d{2}$/.test(date.value)) {
+        error.textContent = 'اختر تاريخ اللقاء.';
+        error.hidden = false;
+        return;
+      }
+      if (!topic.ar.trim() || !topic.sv.trim() || !summary.ar.trim() || !summary.sv.trim()) {
+        error.textContent = 'املأ الموضوع والملخص بالعربية والسويدية.';
+        error.hidden = false;
+        return;
+      }
+      if (meetings.some((meeting) => meeting.data.date === date.value)) {
+        error.textContent = 'يوجد لقاء بهذا التاريخ بالفعل.';
+        error.hidden = false;
+        return;
+      }
+
+      const data = emptyMeeting(date.value);
+      data.topic = topic;
+      data.summary = summary;
+      editing = {
+        path: '',
+        sha: '',
+        data,
+        body: EMPTY_BODY,
+        isNew: true,
+      };
+      pendingImages.clear();
+      markClean();
+      close();
+      renderEditor();
+    });
+
+    actions.append(cancel, create);
+    card.append(title, lead, form, error, actions);
+    overlay.append(card);
+    root.append(overlay);
+    date.focus();
+  };
+
+  const openEditor = async (meeting: LoadedMeeting) => {
     if (dirty) {
       const discard = await confirm(
         'تغييرات غير محفوظة',
@@ -305,21 +464,18 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     }
 
     markClean();
-    editing = meeting
-      ? {
-          path: meeting.file.path,
-          sha: meeting.file.sha,
-          data: JSON.parse(JSON.stringify(meeting.data)) as MeetingData,
-          body: meeting.body,
-          isNew: false,
-        }
-      : {
-          path: '',
-          sha: '',
-          data: emptyMeeting(),
-          body: EMPTY_BODY,
-          isNew: true,
-        };
+    clearPendingImages();
+    const data = normalizeMeeting(
+      JSON.parse(JSON.stringify(meeting.data)) as MeetingData,
+    );
+
+    editing = {
+      path: meeting.file.path,
+      sha: meeting.file.sha,
+      data,
+      body: meeting.body,
+      isNew: false,
+    };
 
     renderEditor();
   };
@@ -329,6 +485,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     container.replaceChildren();
 
     const data = editing.data;
+    data.video ??= defaultVideo();
 
     const head = document.createElement('div');
     head.className = 'view-head view-head--editor';
@@ -338,7 +495,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     title.textContent = editing.isNew ? 'إضافة لقاء' : 'تعديل اللقاء';
     const lead = document.createElement('p');
     lead.textContent = editing.isNew
-      ? 'سيُنشأ ملف MD جديد باسم تاريخ اللقاء.'
+      ? 'سيُنشأ ملف MD جديد باسم تاريخ اللقاء عند الحفظ.'
       : `الملف: ${editing.path}`;
     copy.append(title, lead);
 
@@ -360,7 +517,6 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     dateInput.type = 'date';
     dateInput.className = 'admin-input';
     dateInput.value = data.date;
-    dateInput.disabled = !editing.isNew;
 
     const dateHint = document.createElement('p');
     dateHint.className = 'editor-hint';
@@ -376,19 +532,24 @@ export function createMeetingsView(options: MeetingsViewOptions): {
       updateDateHint();
       markDirty();
     });
-    basics.append(field('تاريخ اللقاء', dateInput), dateHint);
+
+    const dateField = document.createElement('label');
+    dateField.className = 'admin-field';
+    const dateLabel = document.createElement('span');
+    dateLabel.className = 'admin-field__label';
+    dateLabel.textContent = 'تاريخ اللقاء';
+    dateField.append(dateLabel, dateHint, dateInput);
+    basics.append(dateField);
 
     basics.append(
-      localizedPair('الوسم (مثال: غدًا / الأحد الماضي)', data.tag, markDirty),
       localizedPair('موضوع اللقاء', data.topic, markDirty),
       localizedPair('ملخص اللقاء', data.summary, markDirty, true),
-      localizedPair('الخلاصة', data.takeaway, markDirty, true),
     );
 
     container.append(
       section(
         'بيانات اللقاء',
-        'التاريخ والوسم والموضوع والملخص الذي يظهر في البطاقة.',
+        'التاريخ والموضوع والملخص الذي يظهر في البطاقة.',
         basics,
       ),
     );
@@ -410,6 +571,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
 
     container.append(renderImagesSection(data, markDirty));
 
+    const videoData = data.video ?? defaultVideo();
     const video = document.createElement('div');
     video.className = 'editor-card__body';
 
@@ -417,20 +579,20 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     url.type = 'url';
     url.dir = 'ltr';
     url.className = 'admin-input';
-    url.value = data.video.url;
+    url.value = videoData.url;
     url.addEventListener('input', () => {
-      data.video.url = url.value;
+      videoData.url = url.value;
       markDirty();
     });
     video.append(
-      field('رابط الفيديو (YouTube)', url),
-      localizedPair('نص زر الفيديو', data.video.label, markDirty),
-      localizedPair('ملاحظة الفيديو', data.video.note, markDirty, true),
+      field('رابط الفيديو (اختياري)', url),
+      localizedPair('نص زر الفيديو', videoData.label, markDirty),
+      localizedPair('ملاحظة الفيديو', videoData.note, markDirty, true),
     );
     container.append(
       section(
-        'الفيديو',
-        'اترك الرابط إلى قناة الجمعية أو ضع رابط التسجيل مباشرة.',
+        'الفيديو (اختياري)',
+        'اترك الرابط فارغًا إذا لم يكن هناك تسجيل. يمكن حفظ اللقاء بدونه.',
         video,
       ),
     );
@@ -476,7 +638,9 @@ export function createMeetingsView(options: MeetingsViewOptions): {
 
         const preview = document.createElement('img');
         preview.className = 'meeting-image__preview';
-        preview.src = imageUrl(repoPathFromSrc(image.src));
+        preview.src =
+          pendingImages.get(image.src)?.previewUrl ??
+          imageUrl(repoPathFromSrc(image.src));
         preview.alt = image.alt.ar || `صورة ${index + 1}`;
 
         const controls = document.createElement('div');
@@ -517,7 +681,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
         replaceInput.addEventListener('change', () => {
           const file = replaceInput.files?.[0];
           if (!file) return;
-          void uploadMeetingImage(file, image, onChange);
+          void stageMeetingImage(file, image, onChange);
         });
         replaceLabel.append(replaceInput);
 
@@ -526,7 +690,14 @@ export function createMeetingsView(options: MeetingsViewOptions): {
         remove.className = 'btn btn--small btn--danger-ghost';
         remove.textContent = 'حذف';
         remove.addEventListener('click', () => {
-          data.images.splice(index, 1);
+          const removed = data.images.splice(index, 1)[0];
+          if (removed) {
+            const pending = pendingImages.get(removed.src);
+            if (pending) {
+              URL.revokeObjectURL(pending.previewUrl);
+              pendingImages.delete(removed.src);
+            }
+          }
           onChange();
           render();
         });
@@ -549,7 +720,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
         addInput.addEventListener('change', () => {
           const file = addInput.files?.[0];
           if (!file) return;
-          void uploadMeetingImage(file, null, onChange);
+          void stageMeetingImage(file, null, onChange);
         });
 
         addLabel.append(addInput);
@@ -557,7 +728,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
       }
     };
 
-    const uploadMeetingImage = async (
+    const stageMeetingImage = async (
       file: File,
       target: MeetingImage | null,
       onChange: () => void,
@@ -568,21 +739,28 @@ export function createMeetingsView(options: MeetingsViewOptions): {
         const filename = `meeting-${data.date || 'draft'}-${Date.now()}-${Math.random()
           .toString(36)
           .slice(2, 8)}.${extension}`;
-        const path = `src/assets/images/uploads/${filename}`;
-        await api.upload(path, '', prepared.base64);
-
         const src = `../../assets/images/uploads/${filename}`;
+        const previewUrl = URL.createObjectURL(
+          base64ToBlob(prepared.base64, extension),
+        );
+
         if (target) {
+          const oldPending = pendingImages.get(target.src);
+          if (oldPending) {
+            URL.revokeObjectURL(oldPending.previewUrl);
+            pendingImages.delete(target.src);
+          }
           target.src = src;
         } else {
           data.images.push({ src, alt: { ar: '', sv: '' } });
         }
 
+        pendingImages.set(src, {
+          base64: prepared.base64,
+          previewUrl,
+        });
         onChange();
         render();
-        toast('تم رفع الصورة. اضغط «حفظ ونشر» لتثبيت التغيير.', {
-          type: 'info',
-        });
       } catch (error) {
         handleError(error);
       }
@@ -594,14 +772,30 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     const note = document.createElement('p');
     note.className = 'editor-note';
     note.textContent =
-      'الصور تُضغط تلقائيًا قبل الرفع. بعد رفع صورة جديدة اضغط «حفظ ونشر».';
+      'الصور اختيارية. تُضغط محليًا وتُرفع عند الضغط على «حفظ ونشر».';
     body.append(note);
 
     return section(
-      'صور اللقاء',
-      'أضف من صورة إلى 4 صور. الصورة الأولى تظهر بعرض أكبر.',
+      'صور اللقاء (اختيارية)',
+      'أضف حتى 4 صور. يمكن حفظ اللقاء بدون صور.',
       body,
     );
+  };
+
+  const uploadPendingImages = async () => {
+    for (const [src, pending] of Array.from(pendingImages)) {
+      const path = repoPathFromSrc(src);
+      let sha = '';
+      try {
+        const meta = await api.getMeta(path);
+        sha = meta.sha;
+      } catch {
+        // New file.
+      }
+      await api.upload(path, sha, pending.base64);
+      pendingImages.delete(src);
+      URL.revokeObjectURL(pending.previewUrl);
+    }
   };
 
   const saveMeeting = async (button: HTMLButtonElement) => {
@@ -613,31 +807,18 @@ export function createMeetingsView(options: MeetingsViewOptions): {
       return;
     }
     for (const [name, value] of Object.entries({
-      'الوسم': data.tag,
       'الموضوع': data.topic,
       'الملخص': data.summary,
-      'الخلاصة': data.takeaway,
       'نشاط الكبار': data.adults,
       'نشاط الأطفال': data.children,
       'وصف المحاضرة': data.lecture,
-      'نص زر الفيديو': data.video.label,
-      'ملاحظة الفيديو': data.video.note,
     })) {
       if (!value.ar.trim() || !value.sv.trim()) {
         toast(`املأ ${name} بالعربية والسويدية.`, { type: 'error' });
         return;
       }
     }
-    if (!/^https?:\/\//.test(data.video.url)) {
-      toast('أدخل رابط فيديو صالحًا يبدأ بـ http أو https.', {
-        type: 'error',
-      });
-      return;
-    }
-    if (data.images.length === 0) {
-      toast('أضف صورة واحدة على الأقل.', { type: 'error' });
-      return;
-    }
+
     for (const [index, image] of data.images.entries()) {
       if (!image.alt.ar.trim() || !image.alt.sv.trim()) {
         toast(`أضف وصف الصورة ${index + 1} بالعربية والسويدية.`, {
@@ -647,11 +828,30 @@ export function createMeetingsView(options: MeetingsViewOptions): {
       }
     }
 
-    const path = `src/content/meetings/${data.date}.md`;
+    const videoUrl = data.video?.url.trim() ?? '';
+    if (videoUrl) {
+      if (!/^https?:\/\//.test(videoUrl)) {
+        toast('أدخل رابط فيديو صالحًا يبدأ بـ http أو https.', {
+          type: 'error',
+        });
+        return;
+      }
+      if (!data.video?.label.ar.trim() || !data.video?.label.sv.trim()) {
+        toast('املأ نص زر الفيديو بالعربية والسويدية.', { type: 'error' });
+        return;
+      }
+      if (!data.video?.note.ar.trim() || !data.video?.note.sv.trim()) {
+        toast('املأ ملاحظة الفيديو بالعربية والسويدية.', { type: 'error' });
+        return;
+      }
+    }
 
-    if (editing.isNew) {
+    const newPath = `src/content/meetings/${data.date}.md`;
+    const dateChanged = !editing.isNew && editing.path !== newPath;
+
+    if (editing.isNew || dateChanged) {
       try {
-        await api.getContent(path);
+        await api.getContent(newPath);
         toast('يوجد لقاء بهذا التاريخ بالفعل. اختر تاريخًا آخر.', {
           type: 'error',
         });
@@ -666,17 +866,46 @@ export function createMeetingsView(options: MeetingsViewOptions): {
 
     setBusy(button, true);
     try {
-      const text = serializeMarkdown(data, editing.body);
-      const result = await api.saveContent(
-        path,
-        editing.isNew ? '' : editing.sha,
-        text,
-      );
+      await uploadPendingImages();
+
+      const payload: MeetingData = JSON.parse(JSON.stringify(data));
+      if (!payload.video || !payload.video.url.trim()) {
+        delete payload.video;
+      }
+
+      const text = serializeMarkdown(payload, editing.body);
+      let saved;
+
+      if (editing.isNew || dateChanged) {
+        saved = await api.saveContent(newPath, '', text);
+        if (dateChanged) {
+          try {
+            await api.deleteContent(editing.path, editing.sha);
+          } catch (error) {
+            toast(
+              'تم إنشاء الملف الجديد، لكن تعذّر حذف الملف القديم. احذفه يدويًا من GitHub.',
+              { type: 'error' },
+            );
+            handleError(error);
+          }
+        }
+      } else {
+        saved = await api.saveContent(newPath, editing.sha, text);
+      }
+
+      editing.path = newPath;
+      editing.sha = saved.sha;
+      editing.isNew = false;
+
       markClean();
-      toast('تم حفظ اللقاء. سيظهر التعديل بعد إعادة البناء.', {
-        link: result.commitUrl,
-      });
+      toast(
+        dateChanged
+          ? 'تم حفظ اللقاء ونقل الملف إلى التاريخ الجديد.'
+          : 'تم حفظ اللقاء. سيظهر التعديل بعد إعادة البناء.',
+        { link: saved.commitUrl },
+      );
       editing = null;
+      clearPendingImages();
       await load();
     } catch (error) {
       handleError(error);
@@ -696,6 +925,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
       if (!discard) return;
     }
     editing = null;
+    clearPendingImages();
     markClean();
     renderList();
   };
@@ -731,7 +961,11 @@ export function createMeetingsView(options: MeetingsViewOptions): {
         markdownFiles.map(async (file) => {
           const content = await api.getContent(file.path);
           const parsed = parseMarkdown<MeetingData>(content.text);
-          return { file, data: parsed.data, body: parsed.body };
+          return {
+            file,
+            data: normalizeMeeting(parsed.data),
+            body: parsed.body,
+          };
         }),
       );
 
@@ -739,6 +973,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
         b.data.date.localeCompare(a.data.date),
       );
       editing = null;
+      clearPendingImages();
       markClean();
       renderList();
     } catch (error) {

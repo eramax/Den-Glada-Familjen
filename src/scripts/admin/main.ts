@@ -428,11 +428,17 @@ async function renderMeetingsPageText(
     status.classList.add('is-dirty');
   };
 
-  renderPageForm(formContainer, parsed.data, markDirty);
+  let flushImages: (() => Promise<void>) | null = null;
+  renderPageForm(formContainer, parsed.data, markDirty, {
+    registerFlush: (flush) => {
+      flushImages = flush;
+    },
+  });
 
   save.addEventListener('click', async () => {
     setBusy(save, true);
     try {
+      await flushImages?.();
       const text = serializeMarkdown(page.data, page.body);
       const saved = await api.saveContent(page.path, page.sha, text);
       page.sha = saved.sha;
@@ -533,11 +539,17 @@ async function renderPage(tab: PageTab): Promise<void> {
     status.classList.add('is-dirty');
   };
 
-  renderPageForm(formContainer, parsed.data, markDirty);
+  let flushImages: (() => Promise<void>) | null = null;
+  renderPageForm(formContainer, parsed.data, markDirty, {
+    registerFlush: (flush) => {
+      flushImages = flush;
+    },
+  });
 
   save.addEventListener('click', async () => {
     setBusy(save, true);
     try {
+      await flushImages?.();
       const text = serializeMarkdown(page.data, page.body);
       const saved = await api.saveContent(page.path, page.sha, text);
       page.sha = saved.sha;

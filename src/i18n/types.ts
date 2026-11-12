@@ -214,7 +214,6 @@ export interface Dict {
     adultsLabel: string;
     childrenLabel: string;
     lectureLabel: string;
-    takeawayLabel: string;
     videoLabel: string;
     photosLabel: string;
     note: string;

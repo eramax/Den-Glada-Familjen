@@ -44,7 +44,6 @@ ar:
     adultsLabel: أنشطة الكبار
     childrenLabel: أنشطة الأطفال
     lectureLabel: المحاضرة التعليمية
-    takeawayLabel: خلاصة اللقاء
     videoLabel: الفيديو
     photosLabel: صور من اللقاء
     note: الصور والفيديوهات المعروضة توضيحية حتى نشر المواد الفعلية من اللقاءات.
@@ -102,7 +101,6 @@ sv:
     adultsLabel: Aktiviteter för vuxna
     childrenLabel: Aktiviteter för barn
     lectureLabel: Föreläsning
-    takeawayLabel: Veckans tanke
     videoLabel: Video
     photosLabel: Bilder från mötet
     note: Bilder och videor är illustrativa tills det verkliga materialet från mötena publiceras.

@@ -28,10 +28,8 @@ const meetings = defineCollection({
   schema: ({ image }) =>
     z.object({
       date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      tag: localizedString,
       topic: localizedString,
       summary: localizedString,
-      takeaway: localizedString,
       adults: localizedString,
       children: localizedString,
       lecture: localizedString,
@@ -42,13 +40,15 @@ const meetings = defineCollection({
             alt: localizedString,
           }),
         )
-        .min(1)
-        .max(4),
-      video: z.object({
-        url: z.url(),
-        label: localizedString,
-        note: localizedString,
-      }),
+        .max(4)
+        .default([]),
+      video: z
+        .object({
+          url: z.url(),
+          label: localizedString,
+          note: localizedString,
+        })
+        .optional(),
     }),
 });
 

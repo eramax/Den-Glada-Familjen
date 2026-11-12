@@ -291,7 +291,6 @@ export const sv: Dict = {
     adultsLabel: 'Aktiviteter för vuxna',
     childrenLabel: 'Aktiviteter för barn',
     lectureLabel: 'Föreläsning',
-    takeawayLabel: 'Veckans tanke',
     videoLabel: 'Video',
     photosLabel: 'Bilder från mötet',
     note: 'Bilder och videor är illustrativa tills det verkliga materialet från mötena publiceras.',

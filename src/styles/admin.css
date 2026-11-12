@@ -824,8 +824,16 @@ img {
   flex: 1;
 }
 
+.admin-array__row--dual {
+  align-items: flex-end;
+}
+
 .admin-array__row--dual .localized-grid {
   flex: 1;
+}
+
+.admin-array__delete {
+  flex: none;
 }
 
 .admin-array__scalar {
@@ -868,6 +876,7 @@ img {
   place-items: center;
   width: 1.9rem;
   height: 1.9rem;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 9px;
   background: var(--white);
@@ -1323,8 +1332,11 @@ img {
 
 .toast__close {
   flex: none;
+  display: grid;
+  place-items: center;
   width: 1.6rem;
   height: 1.6rem;
+  padding: 0;
   border: none;
   border-radius: 50%;
   background: var(--cream-2);
@@ -1361,6 +1373,16 @@ img {
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
+}
+
+.modal__card--wide {
+  width: min(600px, 100%);
+}
+
+.modal__form {
+  display: grid;
+  gap: 0.8rem;
+  margin: 1rem 0;
 }
 
 .modal__title {

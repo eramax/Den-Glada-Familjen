@@ -14,15 +14,13 @@ export interface MeetingImage {
 export interface Meeting {
   id: string;
   date: string;
-  tag: Localized;
   topic: Localized;
   summary: Localized;
-  takeaway: Localized;
   adults: Localized;
   children: Localized;
   lecture: Localized;
   images: MeetingImage[];
-  video: {
+  video?: {
     url: string;
     label: Localized;
     note: Localized;
