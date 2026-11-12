@@ -623,6 +623,16 @@ img {
   grid-column: 1 / -1;
 }
 
+.admin-fields > .localized-field {
+  grid-column: 1 / -1;
+}
+
+.dual-note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 0.75rem;
+}
+
 .admin-field__label {
   color: var(--ink-2);
   font-size: 0.78rem;
@@ -748,6 +758,10 @@ img {
 
 .admin-array__row > .admin-input,
 .admin-array__row > .admin-textarea {
+  flex: 1;
+}
+
+.admin-array__row--dual .localized-grid {
   flex: 1;
 }
 

@@ -1,6 +1,7 @@
 import { labelFor, SECTION_LABELS } from './labels';
 
 type JsonObject = Record<string, unknown>;
+type Lang = 'ar' | 'sv';
 
 const LONG_KEYS = new Set([
   'lead',
@@ -32,6 +33,9 @@ const LONG_KEYS = new Set([
 ]);
 
 const NO_ADD_PATHS = new Set(['gallery.items']);
+
+// Fields that are identical in both languages (identifiers, icons, links).
+const SHARED_KEYS = new Set(['id', 'href', 'icon', 'tone', 'key']);
 
 // Most useful sections first, technical/SEO sections last.
 const SECTION_ORDER = [
@@ -94,11 +98,16 @@ function isLongField(key: string, value: string): boolean {
   return LONG_KEYS.has(key) || value.length > 90 || value.includes('\n');
 }
 
-function makeInput(
+function stringValue(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function makeControl(
   value: string,
   path: string,
-  lang: 'ar' | 'sv',
+  lang: Lang,
   multiline: boolean,
+  onInput: (value: string) => void,
 ): HTMLInputElement | HTMLTextAreaElement {
   const key = path.split('.').pop() ?? '';
   const isUrl = key === 'href' || key === 'url';
@@ -117,112 +126,159 @@ function makeInput(
   element.dir = isUrl ? 'ltr' : lang === 'ar' ? 'rtl' : 'ltr';
   element.lang = lang;
   element.dataset.path = path;
+  element.dataset.lang = lang;
   if (isUrl) {
     element.spellcheck = false;
     element.autocomplete = 'off';
   }
+
+  element.addEventListener('input', () => onInput(element.value));
   return element;
 }
 
-function renderScalar(
-  parent: JsonObject,
+function renderSharedField(
+  arParent: JsonObject,
+  svParent: JsonObject,
   key: string,
-  value: unknown,
   path: string,
   onChange: () => void,
-  lang: 'ar' | 'sv',
 ): HTMLElement {
   const label = document.createElement('label');
   label.className = 'admin-field';
-  label.dataset.path = path;
 
   const caption = document.createElement('span');
   caption.className = 'admin-field__label';
   caption.textContent = labelFor(path);
 
-  if (typeof value === 'boolean') {
-    const row = document.createElement('span');
-    row.className = 'admin-check';
-    const input = document.createElement('input');
-    input.type = 'checkbox';
-    input.checked = value;
-    input.addEventListener('change', () => {
-      parent[key] = input.checked;
+  const control = makeControl(
+    stringValue(arParent[key]),
+    path,
+    'ar',
+    false,
+    (value) => {
+      arParent[key] = value;
+      svParent[key] = value;
       onChange();
-    });
-    row.append(input);
-    label.append(caption, row);
-    return label;
-  }
+    },
+  );
+  control.dir = 'ltr';
+  control.setAttribute('aria-label', labelFor(path));
 
-  if (typeof value === 'number') {
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.className = 'admin-input';
-    input.value = String(value);
-    input.addEventListener('input', () => {
-      parent[key] = input.value === '' ? 0 : Number(input.value);
-      onChange();
-    });
-    label.append(caption, input);
-    return label;
-  }
-
-  const stringValue = typeof value === 'string' ? value : '';
-  const longField = isLongField(key, stringValue);
-  const input = makeInput(stringValue, path, lang, longField);
-  if (longField) label.classList.add('admin-field--wide');
-
-  input.addEventListener('input', () => {
-    parent[key] = input.value;
-    onChange();
-  });
-
-  label.append(caption, input);
+  label.append(caption, control);
   return label;
 }
 
-function renderObjectBody(
-  object: JsonObject,
+function renderPair(
+  arParent: JsonObject,
+  svParent: JsonObject,
+  key: string,
   path: string,
   onChange: () => void,
-  lang: 'ar' | 'sv',
+): HTMLElement {
+  const arValue = stringValue(arParent[key]);
+  const svValue = stringValue(svParent[key]);
+  const multiline = isLongField(key, arValue) || isLongField(key, svValue);
+
+  const field = document.createElement('div');
+  field.className = 'localized-field';
+
+  const caption = document.createElement('span');
+  caption.className = 'localized-field__label';
+  caption.textContent = labelFor(path);
+
+  const grid = document.createElement('div');
+  grid.className = 'localized-grid';
+
+  for (const lang of ['ar', 'sv'] as const) {
+    const parent = lang === 'ar' ? arParent : svParent;
+    const inputWrap = document.createElement('label');
+    inputWrap.className = 'localized-input';
+
+    const badge = document.createElement('span');
+    badge.className = 'localized-input__badge';
+    badge.textContent = lang === 'ar' ? 'AR' : 'SV';
+
+    const control = makeControl(
+      stringValue(parent[key]),
+      path,
+      lang,
+      multiline,
+      (value) => {
+        parent[key] = value;
+        onChange();
+      },
+    );
+    control.setAttribute(
+      'aria-label',
+      `${labelFor(path)} — ${lang === 'ar' ? 'العربية' : 'Svenska'}`,
+    );
+
+    inputWrap.append(badge, control);
+    grid.append(inputWrap);
+  }
+
+  field.append(caption, grid);
+  return field;
+}
+
+function renderObject(
+  arObject: JsonObject,
+  svObject: JsonObject,
+  path: string,
+  onChange: () => void,
 ): HTMLElement {
   const fields = document.createElement('div');
   fields.className = 'admin-fields';
 
-  for (const [key, value] of Object.entries(object)) {
-    // Gallery keys are internal identifiers mapped to imported images.
+  for (const [key, arValue] of Object.entries(arObject)) {
     if (path.startsWith('gallery.items') && key === 'key') continue;
 
     const childPath = `${path}.${key}`;
+    let svValue = svObject[key];
+    if (svValue === undefined) {
+      svValue = emptyLike(arValue);
+      svObject[key] = svValue;
+    }
 
-    if (isObject(value)) {
+    if (isObject(arValue) && isObject(svValue)) {
       const group = document.createElement('fieldset');
       group.className = 'admin-group';
       const legend = document.createElement('legend');
       legend.textContent = labelFor(childPath);
-      group.append(legend, renderObjectBody(value, childPath, onChange, lang));
+      group.append(
+        legend,
+        renderObject(arValue, svValue, childPath, onChange),
+      );
       fields.append(group);
       continue;
     }
 
-    if (Array.isArray(value)) {
-      fields.append(renderArray(value, childPath, onChange, lang));
+    if (Array.isArray(arValue) && Array.isArray(svValue)) {
+      fields.append(
+        renderArray(key, arValue, svValue, childPath, onChange),
+      );
       continue;
     }
 
-    fields.append(renderScalar(object, key, value, childPath, onChange, lang));
+    if (SHARED_KEYS.has(key)) {
+      fields.append(
+        renderSharedField(arObject, svObject, key, childPath, onChange),
+      );
+      continue;
+    }
+
+    fields.append(renderPair(arObject, svObject, key, childPath, onChange));
   }
 
   return fields;
 }
 
 function renderArray(
-  array: unknown[],
+  key: string,
+  arArray: unknown[],
+  svArray: unknown[],
   path: string,
   onChange: () => void,
-  lang: 'ar' | 'sv',
 ): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'admin-array';
@@ -237,7 +293,7 @@ function renderArray(
 
   const count = document.createElement('span');
   count.className = 'admin-array__count';
-  count.textContent = String(array.length);
+  count.textContent = String(Math.max(arArray.length, svArray.length));
 
   const add = document.createElement('button');
   add.type = 'button';
@@ -251,14 +307,15 @@ function renderArray(
   const hint = document.createElement('p');
   hint.className = 'admin-array__hint';
   hint.textContent =
-    'لاستبدال صور المعرض استخدم تبويب «الصور» في الأعلى. مفاتيح الصور مخفية للحفاظ على الربط.';
+    'لاستبدال صور المعرض استخدم تبويب «عام → الصور والشعار». مفاتيح الصور مخفية للحفاظ على الربط.';
   hint.hidden = !NO_ADD_PATHS.has(path);
 
   const rerender = () => {
-    count.textContent = String(array.length);
+    const length = Math.max(arArray.length, svArray.length);
+    count.textContent = String(length);
     list.replaceChildren();
 
-    if (array.length === 0) {
+    if (length === 0) {
       const empty = document.createElement('p');
       empty.className = 'admin-array__empty';
       empty.textContent = 'لا توجد عناصر بعد.';
@@ -266,10 +323,17 @@ function renderArray(
       return;
     }
 
-    array.forEach((item, index) => {
+    for (let index = 0; index < length; index += 1) {
+      const arItem = arArray[index];
+      const svItem = svArray[index];
       const itemPath = `${path}[${index}]`;
 
-      if (isObject(item)) {
+      if (isObject(arItem) || isObject(svItem)) {
+        const arObject = isObject(arItem) ? arItem : {};
+        const svObject = isObject(svItem) ? svItem : {};
+        if (!isObject(arArray[index])) arArray[index] = arObject;
+        if (!isObject(svArray[index])) svArray[index] = svObject;
+
         const card = document.createElement('div');
         card.className = 'admin-array__card';
         card.dataset.path = itemPath;
@@ -291,7 +355,14 @@ function renderArray(
         up.textContent = '↑';
         up.disabled = index === 0;
         up.addEventListener('click', () => {
-          [array[index - 1], array[index]] = [array[index], array[index - 1]];
+          [arArray[index - 1], arArray[index]] = [
+            arArray[index],
+            arArray[index - 1],
+          ];
+          [svArray[index - 1], svArray[index]] = [
+            svArray[index],
+            svArray[index - 1],
+          ];
           onChange();
           rerender();
         });
@@ -301,9 +372,16 @@ function renderArray(
         down.className = 'icon-btn';
         down.setAttribute('aria-label', 'تحريك لأسفل');
         down.textContent = '↓';
-        down.disabled = index === array.length - 1;
+        down.disabled = index === length - 1;
         down.addEventListener('click', () => {
-          [array[index + 1], array[index]] = [array[index], array[index + 1]];
+          [arArray[index + 1], arArray[index]] = [
+            arArray[index],
+            arArray[index + 1],
+          ];
+          [svArray[index + 1], svArray[index]] = [
+            svArray[index],
+            svArray[index + 1],
+          ];
           onChange();
           rerender();
         });
@@ -314,7 +392,8 @@ function renderArray(
         remove.setAttribute('aria-label', 'حذف العنصر');
         remove.textContent = '×';
         remove.addEventListener('click', () => {
-          array.splice(index, 1);
+          arArray.splice(index, 1);
+          svArray.splice(index, 1);
           onChange();
           rerender();
         });
@@ -323,36 +402,51 @@ function renderArray(
         cardHead.append(cardTitle, actions);
         card.append(
           cardHead,
-          renderObjectBody(item, itemPath, onChange, lang),
+          renderObject(arObject, svObject, itemPath, onChange),
         );
         list.append(card);
-        return;
+        continue;
       }
 
-      const row = document.createElement('div');
-      row.className = 'admin-array__row';
+      const arValue = stringValue(arItem);
+      const svValue = stringValue(svItem);
+      const multiline =
+        isLongField(key, arValue) || isLongField(key, svValue);
 
-      if (typeof item === 'string') {
-        const input = makeInput(
-          item,
-          `${itemPath}`,
+      const row = document.createElement('div');
+      row.className = 'admin-array__row admin-array__row--dual';
+
+      const grid = document.createElement('div');
+      grid.className = 'localized-grid';
+
+      for (const lang of ['ar', 'sv'] as const) {
+        const inputWrap = document.createElement('label');
+        inputWrap.className = 'localized-input';
+
+        const badge = document.createElement('span');
+        badge.className = 'localized-input__badge';
+        badge.textContent = lang === 'ar' ? 'AR' : 'SV';
+
+        const control = makeControl(
+          lang === 'ar' ? arValue : svValue,
+          itemPath,
           lang,
-          item.length > 90 || item.includes('\n'),
+          multiline,
+          (value) => {
+            if (lang === 'ar') arArray[index] = value;
+            else svArray[index] = value;
+            onChange();
+          },
         );
-        input.setAttribute(
+        control.setAttribute(
           'aria-label',
-          `${labelFor(path)} ${index + 1}`,
+          `${labelFor(path)} ${index + 1} — ${
+            lang === 'ar' ? 'العربية' : 'Svenska'
+          }`,
         );
-        input.addEventListener('input', () => {
-          array[index] = input.value;
-          onChange();
-        });
-        row.append(input);
-      } else {
-        const scalar = document.createElement('span');
-        scalar.className = 'admin-array__scalar';
-        scalar.textContent = String(item ?? '');
-        row.append(scalar);
+
+        inputWrap.append(badge, control);
+        grid.append(inputWrap);
       }
 
       const remove = document.createElement('button');
@@ -361,17 +455,27 @@ function renderArray(
       remove.setAttribute('aria-label', 'حذف العنصر');
       remove.textContent = '×';
       remove.addEventListener('click', () => {
-        array.splice(index, 1);
+        arArray.splice(index, 1);
+        svArray.splice(index, 1);
         onChange();
         rerender();
       });
-      row.append(remove);
+
+      row.append(grid, remove);
       list.append(row);
-    });
+    }
   };
 
   add.addEventListener('click', () => {
-    array.push(templateForArray(array));
+    const first = arArray[0] ?? svArray[0];
+    if (isObject(first)) {
+      const template = templateForArray(arArray.length ? arArray : svArray);
+      arArray.push(template);
+      svArray.push(emptyLike(template));
+    } else {
+      arArray.push('');
+      svArray.push('');
+    }
     onChange();
     rerender();
   });
@@ -384,9 +488,9 @@ function renderArray(
 
 function renderSection(
   key: string,
-  value: unknown,
+  arValue: unknown,
+  svValue: unknown,
   onChange: () => void,
-  lang: 'ar' | 'sv',
 ): HTMLElement {
   const details = document.createElement('details');
   details.className = 'admin-section';
@@ -401,20 +505,30 @@ function renderSection(
 
   const meta = document.createElement('span');
   meta.className = 'admin-section__meta';
-  if (Array.isArray(value)) meta.textContent = `${value.length} عنصر`;
-  else if (isObject(value)) meta.textContent = `${Object.keys(value).length} حقل`;
+  if (Array.isArray(arValue)) meta.textContent = `${arValue.length} عنصر`;
+  else if (isObject(arValue)) meta.textContent = `${Object.keys(arValue).length} حقل`;
 
   summary.append(title, meta);
 
   const body = document.createElement('div');
   body.className = 'admin-section__body';
 
-  if (isObject(value)) {
-    body.append(renderObjectBody(value, key, onChange, lang));
-  } else if (Array.isArray(value)) {
-    body.append(renderArray(value, key, onChange, lang));
+  if (isObject(arValue) && isObject(svValue)) {
+    body.append(renderObject(arValue, svValue, key, onChange));
+  } else if (Array.isArray(arValue) && Array.isArray(svValue)) {
+    body.append(
+      renderArray(key, arValue, svValue, key, onChange),
+    );
   } else {
-    body.append(renderScalar({ [key]: value }, key, value, key, onChange, lang));
+    body.append(
+      renderPair(
+        { [key]: arValue },
+        { [key]: svValue },
+        key,
+        key,
+        onChange,
+      ),
+    );
   }
 
   details.append(summary, body);
@@ -431,10 +545,9 @@ export function renderPageForm(
   const toolbar = document.createElement('div');
   toolbar.className = 'editor-toolbar';
 
-  const tabs = document.createElement('div');
-  tabs.className = 'editor-lang-tabs';
-  tabs.setAttribute('role', 'tablist');
-  tabs.setAttribute('aria-label', 'لغة المحتوى');
+  const note = document.createElement('p');
+  note.className = 'dual-note';
+  note.textContent = 'الحقول العربية على اليمين، والسويدية على اليسار.';
 
   const actions = document.createElement('div');
   actions.className = 'editor-toolbar__actions';
@@ -450,55 +563,32 @@ export function renderPageForm(
   collapse.textContent = 'طي الكل';
 
   actions.append(expand, collapse);
-  toolbar.append(tabs, actions);
+  toolbar.append(note, actions);
 
   const panel = document.createElement('div');
   panel.className = 'editor-sections';
-  panel.setAttribute('role', 'tabpanel');
 
-  const languages: Array<'ar' | 'sv'> = ['ar', 'sv'];
-  const buttons: HTMLButtonElement[] = [];
-  let active: 'ar' | 'sv' = 'ar';
+  const keys = Object.keys(data.ar).sort(
+    (first, second) =>
+      (SECTION_RANK.get(first) ?? 999) -
+      (SECTION_RANK.get(second) ?? 999),
+  );
 
-  const renderActive = () => {
-    buttons.forEach((button, index) => {
-      button.classList.toggle('is-active', languages[index] === active);
-      button.setAttribute('aria-selected', String(languages[index] === active));
-    });
-
-    panel.replaceChildren();
-    const languageData = data[active] ?? {};
-
-    const sections = Object.entries(languageData).sort(
-      ([first], [second]) =>
-        (SECTION_RANK.get(first) ?? 999) -
-        (SECTION_RANK.get(second) ?? 999),
-    );
-
-    for (const [key, value] of sections) {
-      panel.append(renderSection(key, value, onChange, active));
+  for (const key of keys) {
+    const arValue = data.ar[key];
+    let svValue = data.sv[key];
+    if (svValue === undefined) {
+      svValue = emptyLike(arValue);
+      data.sv[key] = svValue;
     }
+    panel.append(renderSection(key, arValue, svValue, onChange));
+  }
 
-    if (Object.keys(languageData).length === 0) {
-      const empty = document.createElement('p');
-      empty.className = 'admin-empty';
-      empty.textContent = 'لا توجد بيانات في هذا الملف.';
-      panel.append(empty);
-    }
-  };
-
-  for (const language of languages) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'editor-lang-tab';
-    button.textContent = language === 'ar' ? 'العربية' : 'Svenska';
-    button.setAttribute('role', 'tab');
-    button.addEventListener('click', () => {
-      active = language;
-      renderActive();
-    });
-    buttons.push(button);
-    tabs.append(button);
+  if (keys.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'admin-empty';
+    empty.textContent = 'لا توجد بيانات في هذا الملف.';
+    panel.append(empty);
   }
 
   expand.addEventListener('click', () => {
@@ -514,5 +604,4 @@ export function renderPageForm(
   });
 
   container.append(toolbar, panel);
-  renderActive();
 }
