@@ -1379,6 +1379,30 @@ img {
   width: min(600px, 100%);
 }
 
+.modal__card--form {
+  display: flex;
+  flex-direction: column;
+  width: min(780px, 100%);
+  max-height: min(92vh, 920px);
+}
+
+.modal__card--form .modal__form {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-inline-end: 0.2rem;
+  overscroll-behavior: contain;
+}
+
+.modal__card--form .modal__form .editor-card:last-child {
+  margin-bottom: 0;
+}
+
+.modal__card--form .modal__actions {
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
 .modal__form {
   display: grid;
   gap: 0.8rem;

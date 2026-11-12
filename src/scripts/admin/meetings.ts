@@ -325,11 +325,23 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     const root = document.querySelector<HTMLElement>('#modal-root');
     if (!root) return;
 
+    const data = emptyMeeting();
+    editing = {
+      path: '',
+      sha: '',
+      data,
+      body: EMPTY_BODY,
+      isNew: true,
+    };
+    pendingImages.clear();
+    statusElement = null;
+    markClean();
+
     const overlay = document.createElement('div');
     overlay.className = 'modal';
 
     const card = document.createElement('div');
-    card.className = 'modal__card modal__card--wide';
+    card.className = 'modal__card modal__card--wide modal__card--form';
     card.setAttribute('role', 'dialog');
     card.setAttribute('aria-modal', 'true');
     card.setAttribute('aria-labelledby', 'add-meeting-title');
@@ -342,46 +354,16 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     const lead = document.createElement('p');
     lead.className = 'modal__text';
     lead.textContent =
-      'اختر تاريخ اللقاء واكتب الموضوع والملخص. يمكنك إضافة الصور والفيديو بعد ذلك.';
+      'املأ بيانات اللقاء كاملة هنا. الصور والفيديو اختياريان، وكل شيء يُحفظ من هذه النافذة.';
 
     const form = document.createElement('div');
     form.className = 'modal__form';
-
-    const date = document.createElement('input');
-    date.type = 'date';
-    date.className = 'admin-input';
-    date.value = todayIso();
-
-    const dateHint = document.createElement('p');
-    dateHint.className = 'editor-hint';
-    const updateDateHint = () => {
-      dateHint.textContent = date.value
-        ? `${date.value} · ${formatMeetingDate(date.value, 'ar')}`
-        : 'اختر تاريخ اللقاء';
-    };
-    updateDateHint();
-    date.addEventListener('input', updateDateHint);
-
-    const dateField = document.createElement('label');
-    dateField.className = 'admin-field';
-    const dateLabel = document.createElement('span');
-    dateLabel.className = 'admin-field__label';
-    dateLabel.textContent = 'تاريخ اللقاء';
-    dateField.append(dateLabel, dateHint, date);
-
-    const topic = { ar: '', sv: '' };
-    const summary = { ar: '', sv: '' };
-
     form.append(
-      dateField,
-      localizedPair('موضوع اللقاء', topic, () => {}),
-      localizedPair('ملخص اللقاء', summary, () => {}, true),
+      renderBasicsSection(data),
+      renderActivitiesSection(data),
+      renderImagesSection(data, markDirty),
+      renderVideoSection(data),
     );
-
-    const error = document.createElement('p');
-    error.className = 'login__error';
-    error.setAttribute('role', 'alert');
-    error.hidden = true;
 
     const actions = document.createElement('div');
     actions.className = 'modal__actions';
@@ -391,65 +373,67 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     cancel.className = 'btn btn--ghost';
     cancel.textContent = 'إلغاء';
 
-    const create = document.createElement('button');
-    create.type = 'button';
-    create.className = 'btn btn--primary';
-    create.textContent = 'إنشاء ومتابعة';
+    const save = document.createElement('button');
+    save.type = 'button';
+    save.className = 'btn btn--primary';
+    save.textContent = 'حفظ ونشر';
 
-    const onKeydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') close();
-    };
+    let closed = false;
+    let saving = false;
 
     const close = () => {
+      if (closed) return;
+      closed = true;
       document.removeEventListener('keydown', onKeydown);
       overlay.remove();
     };
 
-    cancel.addEventListener('click', close);
+    const requestClose = async () => {
+      if (saving) return;
+      if (dirty) {
+        const discard = await confirm(
+          'تغييرات غير محفوظة',
+          'هل تريد إغلاق النموذج وتجاهل التغييرات؟',
+          'تجاهل',
+          true,
+        );
+        if (!discard) return;
+      }
+      editing = null;
+      clearPendingImages();
+      markClean();
+      close();
+    };
+
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        void requestClose();
+      }
+    };
+
+    cancel.addEventListener('click', () => {
+      void requestClose();
+    });
     overlay.addEventListener('click', (event) => {
-      if (event.target === overlay) close();
+      if (event.target === overlay) void requestClose();
+    });
+    save.addEventListener('click', async () => {
+      saving = true;
+      try {
+        if (await saveMeeting(save)) close();
+      } finally {
+        saving = false;
+      }
     });
 
     document.addEventListener('keydown', onKeydown);
 
-    create.addEventListener('click', () => {
-      if (!date.value || !/^\d{4}-\d{2}-\d{2}$/.test(date.value)) {
-        error.textContent = 'اختر تاريخ اللقاء.';
-        error.hidden = false;
-        return;
-      }
-      if (!topic.ar.trim() || !topic.sv.trim() || !summary.ar.trim() || !summary.sv.trim()) {
-        error.textContent = 'املأ الموضوع والملخص بالعربية والسويدية.';
-        error.hidden = false;
-        return;
-      }
-      if (meetings.some((meeting) => meeting.data.date === date.value)) {
-        error.textContent = 'يوجد لقاء بهذا التاريخ بالفعل.';
-        error.hidden = false;
-        return;
-      }
-
-      const data = emptyMeeting(date.value);
-      data.topic = topic;
-      data.summary = summary;
-      editing = {
-        path: '',
-        sha: '',
-        data,
-        body: EMPTY_BODY,
-        isNew: true,
-      };
-      pendingImages.clear();
-      markClean();
-      close();
-      renderEditor();
-    });
-
-    actions.append(cancel, create);
-    card.append(title, lead, form, error, actions);
+    actions.append(cancel, save);
+    card.append(title, lead, form, actions);
     overlay.append(card);
     root.append(overlay);
-    date.focus();
+    form.querySelector<HTMLInputElement>('input[type="date"]')?.focus();
   };
 
   const openEditor = async (meeting: LoadedMeeting) => {
@@ -480,36 +464,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     renderEditor();
   };
 
-  const renderEditor = () => {
-    if (!editing) return;
-    container.replaceChildren();
-
-    const data = editing.data;
-    data.video ??= defaultVideo();
-
-    const head = document.createElement('div');
-    head.className = 'view-head view-head--editor';
-
-    const copy = document.createElement('div');
-    const title = document.createElement('h2');
-    title.textContent = editing.isNew ? 'إضافة لقاء' : 'تعديل اللقاء';
-    const lead = document.createElement('p');
-    lead.textContent = editing.isNew
-      ? 'سيُنشأ ملف MD جديد باسم تاريخ اللقاء عند الحفظ.'
-      : `الملف: ${editing.path}`;
-    copy.append(title, lead);
-
-    const back = document.createElement('button');
-    back.type = 'button';
-    back.className = 'btn btn--ghost';
-    back.textContent = 'رجوع إلى اللقاءات';
-    back.addEventListener('click', () => {
-      void closeEditor();
-    });
-
-    head.append(copy, back);
-    container.append(head);
-
+  const renderBasicsSection = (data: MeetingData): HTMLElement => {
     const basics = document.createElement('div');
     basics.className = 'editor-card__body';
 
@@ -539,21 +494,21 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     dateLabel.className = 'admin-field__label';
     dateLabel.textContent = 'تاريخ اللقاء';
     dateField.append(dateLabel, dateHint, dateInput);
-    basics.append(dateField);
 
     basics.append(
+      dateField,
       localizedPair('موضوع اللقاء', data.topic, markDirty),
       localizedPair('ملخص اللقاء', data.summary, markDirty, true),
     );
 
-    container.append(
-      section(
-        'بيانات اللقاء',
-        'التاريخ والموضوع والملخص الذي يظهر في البطاقة.',
-        basics,
-      ),
+    return section(
+      'بيانات اللقاء',
+      'التاريخ والموضوع والملخص الذي يظهر في البطاقة.',
+      basics,
     );
+  };
 
+  const renderActivitiesSection = (data: MeetingData): HTMLElement => {
     const activities = document.createElement('div');
     activities.className = 'editor-card__body';
     activities.append(
@@ -561,17 +516,17 @@ export function createMeetingsView(options: MeetingsViewOptions): {
       localizedPair('نشاط الأطفال', data.children, markDirty, true),
       localizedPair('وصف المحاضرة', data.lecture, markDirty, true),
     );
-    container.append(
-      section(
-        'الأنشطة والمحاضرة',
-        'وصف مختصر لما حدث في اللقاء للكبار والأطفال.',
-        activities,
-      ),
+    return section(
+      'الأنشطة والمحاضرة',
+      'وصف مختصر لما حدث في اللقاء للكبار والأطفال.',
+      activities,
     );
+  };
 
-    container.append(renderImagesSection(data, markDirty));
+  const renderVideoSection = (data: MeetingData): HTMLElement => {
+    data.video ??= defaultVideo();
+    const videoData = data.video;
 
-    const videoData = data.video ?? defaultVideo();
     const video = document.createElement('div');
     video.className = 'editor-card__body';
 
@@ -584,17 +539,52 @@ export function createMeetingsView(options: MeetingsViewOptions): {
       videoData.url = url.value;
       markDirty();
     });
+
     video.append(
       field('رابط الفيديو (اختياري)', url),
       localizedPair('نص زر الفيديو', videoData.label, markDirty),
       localizedPair('ملاحظة الفيديو', videoData.note, markDirty, true),
     );
+
+    return section(
+      'الفيديو (اختياري)',
+      'اترك الرابط فارغًا إذا لم يكن هناك تسجيل. يمكن حفظ اللقاء بدونه.',
+      video,
+    );
+  };
+
+  const renderEditor = () => {
+    if (!editing) return;
+    container.replaceChildren();
+
+    const data = editing.data;
+
+    const head = document.createElement('div');
+    head.className = 'view-head view-head--editor';
+
+    const copy = document.createElement('div');
+    const title = document.createElement('h2');
+    title.textContent = 'تعديل اللقاء';
+    const lead = document.createElement('p');
+    lead.textContent = `الملف: ${editing.path}`;
+    copy.append(title, lead);
+
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'btn btn--ghost';
+    back.textContent = 'رجوع إلى اللقاءات';
+    back.addEventListener('click', () => {
+      void closeEditor();
+    });
+
+    head.append(copy, back);
+    container.append(head);
+
     container.append(
-      section(
-        'الفيديو (اختياري)',
-        'اترك الرابط فارغًا إذا لم يكن هناك تسجيل. يمكن حفظ اللقاء بدونه.',
-        video,
-      ),
+      renderBasicsSection(data),
+      renderActivitiesSection(data),
+      renderImagesSection(data, markDirty),
+      renderVideoSection(data),
     );
 
     const bar = document.createElement('div');
@@ -798,13 +788,13 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     }
   };
 
-  const saveMeeting = async (button: HTMLButtonElement) => {
-    if (!editing) return;
+  const saveMeeting = async (button: HTMLButtonElement): Promise<boolean> => {
+    if (!editing) return false;
     const data = editing.data;
 
     if (!data.date || !/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
       toast('اختر تاريخ اللقاء أولًا.', { type: 'error' });
-      return;
+      return false;
     }
     for (const [name, value] of Object.entries({
       'الموضوع': data.topic,
@@ -815,7 +805,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
     })) {
       if (!value.ar.trim() || !value.sv.trim()) {
         toast(`املأ ${name} بالعربية والسويدية.`, { type: 'error' });
-        return;
+        return false;
       }
     }
 
@@ -824,7 +814,7 @@ export function createMeetingsView(options: MeetingsViewOptions): {
         toast(`أضف وصف الصورة ${index + 1} بالعربية والسويدية.`, {
           type: 'error',
         });
-        return;
+        return false;
       }
     }
 
@@ -834,15 +824,15 @@ export function createMeetingsView(options: MeetingsViewOptions): {
         toast('أدخل رابط فيديو صالحًا يبدأ بـ http أو https.', {
           type: 'error',
         });
-        return;
+        return false;
       }
       if (!data.video?.label.ar.trim() || !data.video?.label.sv.trim()) {
         toast('املأ نص زر الفيديو بالعربية والسويدية.', { type: 'error' });
-        return;
+        return false;
       }
       if (!data.video?.note.ar.trim() || !data.video?.note.sv.trim()) {
         toast('املأ ملاحظة الفيديو بالعربية والسويدية.', { type: 'error' });
-        return;
+        return false;
       }
     }
 
@@ -855,11 +845,11 @@ export function createMeetingsView(options: MeetingsViewOptions): {
         toast('يوجد لقاء بهذا التاريخ بالفعل. اختر تاريخًا آخر.', {
           type: 'error',
         });
-        return;
+        return false;
       } catch (error) {
         if (!(error instanceof ApiError) || error.status !== 404) {
           handleError(error);
-          return;
+          return false;
         }
       }
     }
@@ -907,8 +897,10 @@ export function createMeetingsView(options: MeetingsViewOptions): {
       editing = null;
       clearPendingImages();
       await load();
+      return true;
     } catch (error) {
       handleError(error);
+      return false;
     } finally {
       setBusy(button, false);
     }
