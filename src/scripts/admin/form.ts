@@ -15,7 +15,6 @@ const LONG_KEYS = new Set([
   'quote',
   'note',
   'a',
-  'takeaway',
   'lecture',
   'adults',
   'children',

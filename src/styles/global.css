@@ -2269,17 +2269,6 @@ html[lang='ar'] .next-meeting__time {
   min-width: 0;
 }
 
-.next-meeting__tag {
-  display: inline-flex;
-  margin-bottom: 0.35rem;
-  padding: 0.18rem 0.5rem;
-  border-radius: 999px;
-  background: var(--green-soft);
-  color: var(--green-deep);
-  font-size: 0.66rem;
-  font-weight: 800;
-}
-
 .next-meeting__copy h2 {
   margin-bottom: 0.25rem;
   font-size: clamp(1.15rem, 2vw, 1.45rem);
@@ -2752,26 +2741,6 @@ html[lang='ar'] .meetings-hero__card-time {
   height: 1rem;
 }
 
-.timeline__tag {
-  display: inline-flex;
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  background: var(--amber-soft);
-  color: var(--amber-deep);
-  font-size: 0.7rem;
-  font-weight: 800;
-}
-
-.timeline__item:first-child .timeline__tag {
-  background: var(--green-soft);
-  color: var(--green-deep);
-}
-
-.timeline__item:nth-child(2) .timeline__tag {
-  background: var(--cream-2);
-  color: var(--ink-2);
-}
-
 .timeline__head h2 {
   margin-block: 0.3rem 0.6rem;
   font-size: clamp(1.6rem, 3vw, 2.3rem);
@@ -2823,31 +2792,6 @@ html[lang='ar'] .meetings-hero__card-time {
   color: var(--ink-2);
   font-size: 0.84rem;
   line-height: 1.6;
-}
-
-.timeline__takeaway {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  margin-block: 1rem 1.2rem;
-  padding: 0.9rem 1rem;
-  border-inline-start: 3px solid var(--amber);
-  border-radius: var(--radius-sm);
-  background: var(--cream);
-  color: var(--ink);
-  font-size: 0.9rem;
-  line-height: 1.7;
-}
-
-.timeline__takeaway .icon {
-  width: 1.1rem;
-  height: 1.1rem;
-  margin-top: 0.2rem;
-  color: var(--amber-deep);
-}
-
-.timeline__takeaway strong {
-  font-weight: 800;
 }
 
 .timeline__media {
