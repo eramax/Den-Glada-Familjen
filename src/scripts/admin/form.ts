@@ -477,12 +477,6 @@ function renderArray(
   const list = document.createElement('div');
   list.className = 'admin-array__list';
 
-  const hint = document.createElement('p');
-  hint.className = 'admin-array__hint';
-  hint.textContent =
-    'لاستبدال صور المعرض استخدم تبويب «عام → الصور والشعار». مفاتيح الصور مخفية للحفاظ على الربط.';
-  hint.hidden = !NO_ADD_PATHS.has(path);
-
   const rerender = () => {
     const length = Math.max(arArray.length, svArray.length);
     count.textContent = String(length);
@@ -654,7 +648,7 @@ function renderArray(
   });
 
   head.append(title, count, add);
-  wrapper.append(head, hint, list);
+  wrapper.append(head, list);
   rerender();
   return wrapper;
 }
